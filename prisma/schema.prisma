@@ -1,0 +1,52 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Inventory {
+  id           Int             @id @default(autoincrement())
+  jenis_barang String
+  ukuran       String
+  status       StatusInventory
+  Peminjaman   Peminjaman[]
+}
+
+model Karyawan {
+  id           Int           @id @default(autoincrement())
+  nama         String
+  jabatan      String
+  periode      String
+  status_kerja StatusKerja
+  Peminjaman   Peminjaman[]
+}
+
+model Peminjaman {
+  id                 Int           @id @default(autoincrement())
+  karyawan_id        Int
+  inventory_id       Int
+  tanggal_peminjaman DateTime
+  karyawan           Karyawan      @relation(fields: [karyawan_id], references: [id])
+  inventory          Inventory     @relation(fields: [inventory_id], references: [id])
+  Pengembalian       Pengembalian?
+}
+
+model Pengembalian {
+  id                   Int        @id @default(autoincrement())
+  peminjaman_id        Int        @unique
+  tanggal_pengembalian DateTime
+  peminjaman           Peminjaman @relation(fields: [peminjaman_id], references: [id])
+}
+
+enum StatusInventory {
+  inventory
+  dipinjam
+}
+
+enum StatusKerja {
+  active
+  inactive
+}
