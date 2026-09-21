@@ -9,7 +9,7 @@ generator client {
 
 model Inventory {
   id           Int             @id @default(autoincrement())
-  jenis_barang String
+  jenis_barang JenisBarang
   ukuran       String
   status       StatusInventory
   Peminjaman   Peminjaman[]
@@ -49,4 +49,9 @@ enum StatusInventory {
 enum StatusKerja {
   active
   inactive
+}
+
+enum JenisBarang {
+  seragam
+  sepatu
 }

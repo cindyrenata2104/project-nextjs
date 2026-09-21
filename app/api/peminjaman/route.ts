@@ -41,11 +41,7 @@ export async function POST(request: Request) {
       }
     });
 
-    // Update status inventory menjadi "dipinjam"
-    await prisma.inventory.update({
-      where: { id: parseInt(inventory_id, 10) },
-      data: { status: "dipinjam" },
-    });
+
 
     return NextResponse.json(newPeminjaman, { status: 201 });
   } catch (error) {

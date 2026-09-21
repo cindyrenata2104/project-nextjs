@@ -43,19 +43,6 @@ export async function POST(request: Request) {
       }
     });
 
-    // Cari peminjaman untuk mengetahui inventory_id
-    const peminjaman = await prisma.peminjaman.findUnique({
-      where: { id: parseInt(peminjaman_id, 10) }
-    });
-
-    if (peminjaman) {
-      // Update status inventory menjadi "inventory" kembali
-      await prisma.inventory.update({
-        where: { id: peminjaman.inventory_id },
-        data: { status: "inventory" },
-      });
-    }
-
     return NextResponse.json(newPengembalian, { status: 201 });
   } catch (error) {
     console.error("Error POST pengembalian:", error);

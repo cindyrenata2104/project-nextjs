@@ -10,6 +10,7 @@ interface Inventory {
 };
 
 export default function InventoryPage() {
+  const[isModalOpen, setModalOpen] = useState(false);
   const [inventory, setInventory] = useState<Inventory[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ jenis_barang: '', ukuran: '', status: 'inventory' });
@@ -58,11 +59,52 @@ export default function InventoryPage() {
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-800">Manajemen Inventaris</h1>
-        <button disabled className="bg-blue-600 text-white opacity-50 px-6 py-2.5 rounded-lg font-medium cursor-not-allowed">
+        <h1 className="text-3xl font-bold text-gray-800">Manajemen Inventory</h1>
+        <button
+        onClick={()=> setModalOpen(true)} className="bg-blue-500 text-white px-4 py-2 rounded mb-4">
           + Tambah Barang
         </button>
-      </div>
+        {/* JIKA isModalOpen true, TAMPILKAN BAGIAN INI: */}
+{isModalOpen && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    
+    {/* KOTAK MODAL PUTIH */}
+    <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+      <h2 className="text-xl font-bold mb-4">Form Tambah Barang</h2>
+      
+      <form>
+        {/* Input Nama Barang */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-1">Jenis Barang</label>
+          <input type="text" className="w-full border rounded px-3 py-2" />
+          <label className="block text-sm font-medium mb-1">Ukuran</label>
+          <input type="text" className="w-full border rounded px-3 py-2" />
+          <label className="block text-sm font-medium mb-1">Status</label>
+          <input type="text" className="w-full border rounded px-3 py-2" />
+        </div>
+        
+        {/* Tombol Aksi */}
+        <div className="flex justify-end gap-2">
+          {/* Tombol Batal: Mengubah state kembali ke false untuk menutup pop-up */}
+          <button 
+            type="button" 
+            onClick={() => setModalOpen(false)}
+            className="bg-gray-300 px-4 py-2 rounded"
+          >
+            Batal
+          </button>
+          
+          <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+            Simpan
+          </button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+)}
+
+      </div> 
 
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="overflow-x-auto">
@@ -73,7 +115,6 @@ export default function InventoryPage() {
                 <th className="p-4 font-semibold">Jenis Barang</th>
                 <th className="p-4 font-semibold">Ukuran</th>
                 <th className="p-4 font-semibold">Status</th>
-                <th className="p-4 font-semibold text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -93,16 +134,10 @@ export default function InventoryPage() {
                     <td className="p-4 text-gray-600">{item.ukuran}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status === 'inventory' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                        {item.status === 'inventory' ? 'Tersedia' : 'Dipinjam'}
+                        {item.status === 'inventory' ? 'inventory' : 'Dipinjam'}
                       </span>
                     </td>
                     <td className="p-4 text-right">
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="text-red-500 hover:text-red-700 font-medium px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
-                      >
-                        Hapus
-                      </button>
                     </td>
                   </tr>
                 ))
