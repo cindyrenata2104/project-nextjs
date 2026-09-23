@@ -8,6 +8,10 @@ interface Inventory {
   ukuran: string;
   status: string;
 };
+//interface dropdown jenis barang
+interface inventory{
+  jenis_barang: string;
+}
 
 export default function InventoryPage() {
   const[isModalOpen, setModalOpen] = useState(false);
@@ -31,16 +35,23 @@ export default function InventoryPage() {
     }
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+    const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetch('/api/inventory', {
+      const response = await fetch('/api/inventory', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
-      setForm({ jenis_barang: '', ukuran: '', status: 'inventory' });
-      fetchInventory();
+      
+      if (response.ok) {
+         // Jika berhasil masuk database:
+         setForm({ jenis_barang: '', ukuran: '', status: 'inventory' }); // Reset form
+         setModalOpen(false); // Tutup pop up
+         fetchInventory(); // Ambil data terbaru agar tampil di tabel
+      } else {
+         alert("Gagal menambahkan barang ke database.");
+      }
     } catch (error) {
       console.error("Failed to create inventory", error);
     }
@@ -72,15 +83,37 @@ export default function InventoryPage() {
     <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
       <h2 className="text-xl font-bold mb-4">Form Tambah Barang</h2>
       
-      <form>
+      <form onSubmit={handleCreate}>
         {/* Input Nama Barang */}
-        <div className="mb-4">
+        <div className="mb-4"> 
           <label className="block text-sm font-medium mb-1">Jenis Barang</label>
-          <input type="text" className="w-full border rounded px-3 py-2" />
+           <select 
+            required
+            className="w-full border rounded px-3 py-2 mb-3"
+            value={form.jenis_barang}
+            onChange={(e) => setForm({ ...form, jenis_barang: e.target.value })}
+          >
+            <option value="">-- Pilih Jenis Barang --</option>
+            <option value="seragam">Seragam</option>
+            <option value="sepatu">Sepatu</option>
+          </select>
           <label className="block text-sm font-medium mb-1">Ukuran</label>
-          <input type="text" className="w-full border rounded px-3 py-2" />
+          <input 
+            type="text" 
+            required
+            className="w-full border rounded px-3 py-2 mb-3" 
+            value={form.ukuran}
+            onChange={(e) => setForm({ ...form, ukuran: e.target.value })}
+          />
+
           <label className="block text-sm font-medium mb-1">Status</label>
-          <input type="text" className="w-full border rounded px-3 py-2" />
+          <input 
+            type="text" 
+            readOnly
+            className="w-full border rounded px-3 py-2 bg-gray-100 text-gray-500" 
+            value={form.status}
+          />
+          <label className="block text-sm font-medium mb-1">Status</label>
         </div>
         
         {/* Tombol Aksi */}
@@ -115,7 +148,7 @@ export default function InventoryPage() {
                 <th className="p-4 font-semibold">Jenis Barang</th>
                 <th className="p-4 font-semibold">Ukuran</th>
                 <th className="p-4 font-semibold">Status</th>
-              </tr>
+              </tr>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  
             </thead>
             <tbody className="divide-y divide-gray-100">
               {loading ? (
