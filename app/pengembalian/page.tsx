@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 
-// 1. Definisikan tipe data sesuai dengan hasil JOIN dari Prisma
 interface Pengembalian {
   id: number;
   peminjaman_id: number;
@@ -16,34 +15,32 @@ interface Pengembalian {
     }
     inventory: {
         jenis_barang: string;
+        ukuran: string;
     }
   };
 };
-//interface untuk dropdown
-interface karyawan {
+
+interface Karyawan {
   id: number;
   nama: string;
-}
-interface Inventory {
-  id: number;
-  jenis_barang: string;
-  status: string;
 }
 
 export default function PengembalianPage() {
   const [dataPengembalian, setDataPengembalian] = useState<Pengembalian[]>([]);
   const [loading, setLoading] = useState(true);
 
-    const [isModalOpen, setModalOpen] = useState(false);
-  const [karyawanList, setKaryawanList] = useState<karyawan[]>([]);
-  const [inventoryList, setInventoryList] = useState<Inventory[]>([]);
+  const [isModalOpen, setModalOpen] = useState(false);
+  const [karyawanList, setKaryawanList] = useState<Karyawan[]>([]);
   
-  // State baru untuk menampung riwayat peminjaman (untuk dicari ID-nya nanti)
+  // State untuk menampung riwayat peminjaman (yang belum dikembalikan)
   const [peminjamanAktif, setPeminjamanAktif] = useState<any[]>([]);
+  
+  // State untuk menampung daftar barang (peminjaman) spesifik untuk Karyawan yang dipilih
+  const [barangDipinjam, setBarangDipinjam] = useState<any[]>([]);
   
   const [formData, setFormData] = useState({
       karyawan_id: "",
-      inventory_id: "",
+      peminjaman_id: "", // Dulu pakai inventory_id, sekarang langsung pakai peminjaman_id
       tanggal_pengembalian: "",
   });
 
@@ -72,14 +69,7 @@ export default function PengembalianPage() {
           const resKaryawan = await fetch("/api/karyawan");
           if (resKaryawan.ok) setKaryawanList(await resKaryawan.json());
 
-          // 2. Ambil data inventory 
-          const resInventory = await fetch("/api/inventory");
-          if (resInventory.ok) {
-            const allInventory = await resInventory.json();
-            setInventoryList(allInventory);
-          }
-
-          // 3. Ambil data peminjaman aktif
+          // 2. Ambil data peminjaman aktif
           const resPeminjaman = await fetch("/api/peminjaman");
           if (resPeminjaman.ok) {
              const dataPeminjaman = await resPeminjaman.json();
@@ -95,36 +85,42 @@ export default function PengembalianPage() {
     }
   }, [isModalOpen]);
 
+  // --- FILTER BARANG YANG DIPINJAM SETIAP KALI KARYAWAN DIPILIH ---
+  useEffect(() => {
+    if (formData.karyawan_id && peminjamanAktif.length > 0) {
+      const filteredPeminjaman = peminjamanAktif.filter(
+        (p) => p.karyawan_id === Number(formData.karyawan_id)
+      );
+      setBarangDipinjam(filteredPeminjaman);
+      // Reset pilihan barang jika karyawannya diganti
+      setFormData((prev) => ({ ...prev, peminjaman_id: "" }));
+    } else {
+      setBarangDipinjam([]);
+    }
+  }, [formData.karyawan_id, peminjamanAktif]);
+
   // --- HANDLER SUBMIT FORM ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // LOGIKA PENCARIAN PEMINJAMAN_ID
-    // Cari transaksi peminjaman berdasarkan gabungan Karyawan dan Barang yang dipilih user di 2 dropdown
-    const peminjamanTerkait = peminjamanAktif.find(
-      (p) => p.karyawan_id === Number(formData.karyawan_id) && p.inventory_id === Number(formData.inventory_id)
-    );
-
-    // Jika Karyawan tersebut ternyata tidak meminjam barang tersebut
-    if (!peminjamanTerkait) {
-      alert("Gagal: Transaksi peminjaman tidak ditemukan! Pastikan Karyawan tersebut memang meminjam barang yang Anda pilih.");
+    if (!formData.peminjaman_id) {
+      alert("Silakan pilih barang yang akan dikembalikan.");
       return;
     }
 
     try {
-      // Kita kirim peminjaman_id ke API, sesuai dengan standar API Anda!
       const response = await fetch("/api/pengembalian", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          peminjaman_id: peminjamanTerkait.id,
+          peminjaman_id: formData.peminjaman_id,
           tanggal_pengembalian: formData.tanggal_pengembalian,
         }),
       });
 
       if (response.ok) {
         setModalOpen(false);
-        setFormData({ karyawan_id: "", inventory_id: "", tanggal_pengembalian: "" });
+        setFormData({ karyawan_id: "", peminjaman_id: "", tanggal_pengembalian: "" });
         fetchPengembalian();
       } else {
         alert("Gagal menambahkan data pengembalian");
@@ -144,7 +140,7 @@ export default function PengembalianPage() {
         </h1>
 
         <button
-          onClick={() => setModalOpen (true)}
+          onClick={() => setModalOpen(true)}
           className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium"
         >
           + Tambah Pengembalian
@@ -169,26 +165,22 @@ export default function PengembalianPage() {
             <tr key={item.id} className="hover:bg-gray-50">
               <td className="border border-gray-300 px-4 py-2">{item.id}</td>
               
-              {/* 3. CARA MENAMPILKAN DATA HASIL JOIN */}
-              {/* Memanggil data dari tabel karyawan */}
               <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman.id ? item.peminjaman.id: "Tidak ada data"}
+                {item.peminjaman?.id ? item.peminjaman.id : "Tidak ada data"}
               </td>
               <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman.id ? item.peminjaman.karyawan.id: "Tidak ada data"}
+                {item.peminjaman?.karyawan?.id ? item.peminjaman.karyawan.id : "Tidak ada data"}
               </td>
                <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman.id ? item.peminjaman.karyawan.nama : "Tidak ada data"}
+                {item.peminjaman?.karyawan?.nama ? item.peminjaman.karyawan.nama : "Tidak ada data"}
               </td>
               <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman.id ? item.peminjaman.karyawan.jabatan : "-"}
+                {item.peminjaman?.karyawan?.jabatan ? item.peminjaman.karyawan.jabatan : "-"}
               </td>
               
-              {/* Memanggil data dari tabel inventory */}
               <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman.id ? item.peminjaman.inventory.jenis_barang : "Barang tidak ditemukan"}
+                {item.peminjaman?.inventory?.jenis_barang ? item.peminjaman.inventory.jenis_barang : "Barang tidak ditemukan"}
               </td>
-              {/* Tanggal biasa */}
               <td className="border border-gray-300 px-4 py-2">
                 {new Date(item.tanggal_pengembalian).toLocaleDateString('id-ID')}
               </td>
@@ -196,7 +188,8 @@ export default function PengembalianPage() {
           ))}
         </tbody>
       </table>
-            {/* MODAL TAMBAH PENGEMBALIAN */}
+
+      {/* MODAL TAMBAH PENGEMBALIAN */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
@@ -231,24 +224,31 @@ export default function PengembalianPage() {
                 </select>
               </div>
 
-              {/* Dropdown Barang (Inventory) */}
+              {/* Dropdown Barang (Otomatis filter barang milik Karyawan yang dipilih) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Barang yang Dikembalikan
                 </label>
                 <select
                   required
-                  className="w-full border border-gray-300 rounded px-3 py-2"
-                  value={formData.inventory_id}
-                  onChange={(e) => setFormData({ ...formData, inventory_id: e.target.value })}
+                  className="w-full border border-gray-300 rounded px-3 py-2 disabled:bg-gray-100"
+                  value={formData.peminjaman_id}
+                  onChange={(e) => setFormData({ ...formData, peminjaman_id: e.target.value })}
+                  disabled={!formData.karyawan_id}
                 >
                   <option value="">-- Pilih Barang --</option>
-                  {inventoryList.map((inv) => (
-                    <option key={inv.id} value={inv.id}>
-                      {inv.jenis_barang}
+                  {barangDipinjam.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.inventory.jenis_barang} {p.inventory.ukuran ? `(Ukuran: ${p.inventory.ukuran})` : ''} - ID Transaksi: {p.id}
                     </option>
                   ))}
                 </select>
+                {!formData.karyawan_id && (
+                  <p className="text-xs text-gray-500 mt-1">Pilih karyawan terlebih dahulu</p>
+                )}
+                {formData.karyawan_id && barangDipinjam.length === 0 && (
+                  <p className="text-xs text-red-500 mt-1">Karyawan ini tidak sedang meminjam barang apapun.</p>
+                )}
               </div>
 
               {/* Input Tanggal */}
@@ -276,6 +276,7 @@ export default function PengembalianPage() {
                 <button
                   type="submit"
                   className="bg-blue-600 text-white px-4 py-2 rounded"
+                  disabled={!formData.karyawan_id || !formData.peminjaman_id}
                 >
                   Simpan
                 </button>
