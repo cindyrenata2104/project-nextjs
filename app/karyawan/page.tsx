@@ -47,8 +47,24 @@ export default function KaryawanPage() {
       console.error("Gagal menambahkan data karyawan", error);
     }
   };
-
-
+  //TOGGLE STATUS
+  const toggleStatus = async (id: number, currentStatus: string) => {
+    console.log("Tombol diklik! ID:", id, "Status saat ini:", currentStatus);
+    try{
+    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+    const response = await fetch(`/api/karyawan/${id}`,
+       {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status_kerja: newStatus }),
+    });
+    if(response.ok){
+      fetchKaryawan();
+    }
+  } catch(error) {
+    console.error("Gagal mengubah status karyawan", error);
+  };
+  };
 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
@@ -74,7 +90,7 @@ export default function KaryawanPage() {
                 <label className="block text-sm font-medium mb-1">Jabatan</label>
                 <input type="text" className="w-full border rounded px-3 py-2" value={form.jabatan} onChange={(e) => setForm({ ...form, jabatan: e.target.value })} />
                 <label className="block text-sm font-medium mb-1">Periode</label>
-                <input type="text" className="w-full border rounded px-3 py-2"value={form.periode} onChange={(e) => setForm({ ...form, periode: e.target.value })} />
+                <input type="text" className="w-full border rounded px-3 py-2" value={form.periode} onChange={(e) => setForm({ ...form, periode: e.target.value })} />
                 <label className="block text-sm font-medium mb-1"> Status Kerja</label>
                 <input type="text" className="w-full border rounded px-3 py-2" value={form.status_kerja} onChange={(e) => setForm({ ...form, status_kerja: e.target.value })} />
               </div>
@@ -129,9 +145,10 @@ export default function KaryawanPage() {
                     <td className="p-4 text-gray-600">{item.jabatan}</td>
                     <td className="p-4 text-gray-600">{item.periode}</td>
                     <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${item.status_kerja === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                        {item.status_kerja === 'active' ? 'Aktif' : 'Tidak Aktif'}
-                      </span>
+                      <button onClick = {() => toggleStatus(item.id, item.status_kerja)}
+                      className = {`px-3 py-1 rounded-full text-xs font-medium ${item.status_kerja === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                        {item.status_kerja === 'active' ? 'active' : 'inactive'}
+                      </button> 
                     </td>
                     <td className="p-4 text-right">
                     </td>
