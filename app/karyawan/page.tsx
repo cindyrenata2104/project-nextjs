@@ -15,8 +15,9 @@ export default function KaryawanPage() {
   const [karyawans, setKaryawans] = useState<Karyawan[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ nama: '', jabatan: '', periode: '', status_kerja: 'active' });
+  const [search, setSearch] = useState(''); 
 
-  useEffect(() => {
+  useEffect(() => { 
     fetchKaryawan();
   }, []);
 
@@ -66,6 +67,14 @@ export default function KaryawanPage() {
   };
   };
 
+  // FILTERING DATA BERDASARKAN SEARCH
+  const filteredKaryawans = karyawans.filter((item) => {
+    return (
+    item.id.toString().includes(search.toString()) ||
+    item.nama.toLowerCase().includes(search.toLowerCase())
+    )
+  });  
+ 
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8">
       <div className="flex justify-between items-center">
@@ -74,6 +83,18 @@ export default function KaryawanPage() {
           + Tambah Karyawan
         </button>
       </div>
+
+      {/* INPUT SEARCH */}
+       <div>
+      <input
+        type="text"
+        placeholder="Cari berdasarkan ID atau nama..."
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        className="w-full border rounded-lg px-4 py-2"
+      />
+    </div>
+
       {/* JIKA isModalOpen true, TAMPILKAN BAGIAN INI: */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
@@ -137,8 +158,13 @@ export default function KaryawanPage() {
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada data karyawan.</td>
                 </tr>
-              ) : (
-                karyawans.map((item) => (
+              ) : filteredKaryawans.length === 0? (
+
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada data karyawan.</td>
+                </tr>
+              ):
+                filteredKaryawans.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                     <td className="p-4 text-gray-600">#{item.id}</td>
                     <td className="p-4 font-medium text-gray-800">{item.nama}</td>
@@ -154,7 +180,7 @@ export default function KaryawanPage() {
                     </td>
                   </tr>
                 ))
-              )}
+              }
             </tbody>
           </table>
         </div>
