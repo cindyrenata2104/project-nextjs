@@ -7,19 +7,16 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const links = [
-    { name: 'Dashboard', href: '/dashboard', icon: '📊' },
-    { name: 'Karyawan', href: '/karyawan', icon: '👥' },
-    { name: 'Inventory', href: '/inventory', icon: '📦' },
-    { name: 'Peminjaman', href: '/peminjaman', icon: '📤' },
-    { name: 'Pengembalian', href: '/pengembalian', icon: '📥' },
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Karyawan', href: '/karyawan'},
+    { name: 'Inventory', href: '/inventory' },
+    { name: 'Peminjaman', href: '/peminjaman' },
+    { name: 'Pengembalian', href: '/pengembalian' },
   ];
 
   return (
     <aside className="w-64 bg-slate-900 text-white min-h-screen flex flex-col shadow-xl">
       <div className="p-6 flex items-center gap-3">
-        <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center font-bold text-lg">
-          S
-        </div>
         <h2 className="text-xl font-bold tracking-tight">Sistem Inventaris</h2>
       </div>
       <nav className="flex-1 px-4 space-y-2 mt-4">
@@ -35,7 +32,7 @@ export default function Sidebar() {
                   : 'text-slate-300 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <span className="text-xl">{link.icon}</span>
+              
               <span className="font-medium">{link.name}</span>
             </Link>
           );
