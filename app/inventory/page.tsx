@@ -8,10 +8,6 @@ interface Inventory {
   ukuran: string;
   status: string;
 };
-//interface dropdown jenis barang
-interface inventory {
-  jenis_barang: string;
-}
 
 export default function InventoryPage() {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -58,15 +54,6 @@ export default function InventoryPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Yakin ingin menghapus barang ini?')) return;
-    try {
-      await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
-      fetchInventory();
-    } catch (error) {
-      console.error("Failed to delete inventory", error);
-    }
-  };
   //FILTERED INVENTORY
   const filteredInventory = inventory.filter((item) => {
     return(
@@ -133,7 +120,6 @@ export default function InventoryPage() {
                     className="w-full border rounded px-3 py-2 bg-gray-100 text-gray-500"
                     value={form.status}
                   />
-                  <label className="block text-sm font-medium mb-1">Status</label>
                 </div>
                 
                 

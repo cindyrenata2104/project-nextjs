@@ -60,11 +60,15 @@ export async function POST(request: Request) {
     // 3. Cari peminjaman untuk memastikan datanya ada
     // dan mengambil inventory_id
     // ==========================================
-    const peminjaman = await prisma.peminjaman.findUnique({
-      where: {
-        id: parseInt(peminjaman_id, 10),
-      },
-    });
+  const peminjaman = await prisma.peminjaman.findUnique({
+  where: {
+    id: parseInt(peminjaman_id, 10),
+  },
+  include: {
+    karyawan: true,
+    inventory: true,
+  },
+});
 
     if (!peminjaman) {
       return NextResponse.json(
@@ -108,6 +112,18 @@ export async function POST(request: Request) {
         },  
         data:{
           status_kerja: 'inactive', 
+        }
+      })
+
+      await tx.riwayat.create({
+        data:{
+          id_karyawan: peminjaman.karyawan_id,
+          nama_karyawan: peminjaman.karyawan.nama,
+          id_barang: peminjaman.inventory_id,
+          jenis_barang: peminjaman.inventory.jenis_barang, 
+          jenis: "Pengembalian",
+          aktivitas: `Pengembalian barang ${peminjaman.inventory.jenis_barang} dengan ID ${peminjaman.inventory_id} telah berhasil`,
+          keterangan: `Pinjaman barang dengan ID ${peminjaman.inventory_id} telah berhasil`,
         }
       })
 

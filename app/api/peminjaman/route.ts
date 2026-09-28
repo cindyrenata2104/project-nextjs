@@ -70,7 +70,18 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-
+    const karyawan = await prisma.karyawan.findUnique({
+      where:{
+        id:karyawanId  
+      }
+    });
+    if (!karyawan){
+      return(
+        NextResponse.json({error:"karyawan tidak ditemukan"},
+          {status:404}
+        )
+      )
+    }
     // 6. Transaction
     const result = await prisma.$transaction(async (tx) => {
 
@@ -92,7 +103,17 @@ export async function POST(request: Request) {
           status: "dipinjam",
         },
       });
-
+      await tx.riwayat.create({
+        data:{
+          id_karyawan: karyawanId,
+          nama_karyawan:karyawan.nama,
+          id_barang: inventoryId,
+          jenis_barang: inventory.jenis_barang, 
+          jenis: "Peminjaman",
+          aktivitas: `Karyawan ${karyawan.nama} meminjam ${inventory.jenis_barang} dengan ID ${inventoryId}`,
+          keterangan: `Pinjaman barang dengan ID ${inventoryId} telah berhasil`,
+        }
+      })
       return peminjaman;
     });
 

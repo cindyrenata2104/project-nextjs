@@ -28,7 +28,7 @@ interface Karyawan {
 export default function PengembalianPage() {
   const [dataPengembalian, setDataPengembalian] = useState<Pengembalian[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [search, setSearch] = useState('');
   const [isModalOpen, setModalOpen] = useState(false);
   const [karyawanList, setKaryawanList] = useState<Karyawan[]>([]);
   
@@ -129,7 +129,15 @@ export default function PengembalianPage() {
       console.error("Error:", error);
     }
   };
-
+  //FILLTER 
+  const fillteredData = dataPengembalian.filter((item) => {
+  return (
+    item.id.toString().includes(search.toString()) ||
+    item.peminjaman?.karyawan.nama.toLowerCase().includes(search.toLowerCase()) ||
+    item.peminjaman?.inventory?.jenis_barang.toLowerCase().includes(search.toLowerCase())
+  )
+  }
+ )
   return (
      <div className="p-8 max-w-6xl mx-auto space-y-8">
 
@@ -147,7 +155,17 @@ export default function PengembalianPage() {
         </button>
         
       </div>
-      
+      {/* INPUT SEARCH */}
+<div className="mb-4">
+  <input
+    type="text"
+    placeholder="Cari berdasarkan ID, nama karyawan, atau barang..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="w-full border rounded-lg px-4 py-2"
+  />
+</div>
+
       <table className="min-w-full border-collapse border border-gray-300">
         <thead>
           <tr className="bg-gray-100">
@@ -161,7 +179,7 @@ export default function PengembalianPage() {
           </tr>
         </thead>
         <tbody>
-          {dataPengembalian.map((item) => (
+          {fillteredData.map((item) => (
             <tr key={item.id} className="hover:bg-gray-50">
               <td className="border border-gray-300 px-4 py-2">{item.id}</td>
               

@@ -14,6 +14,19 @@ export async function PUT(
       where: { id },
       data: body,
     });
+    // Tambahkan pencatatan riwayat di sini
+    await prisma.riwayat.create({
+      data: {
+        id_karyawan: updatedKaryawan.id,
+        nama_karyawan: updatedKaryawan.nama,
+        jenis: "Karyawan",
+        aktivitas: "Ubah Status Karyawan",
+        keterangan: `Status kerja karyawan ${updatedKaryawan.nama} telah diubah menjadi ${updatedKaryawan.status_kerja}`,
+      }
+    });
+
+    return NextResponse.json(updatedKaryawan);
+
 
     return NextResponse.json(updatedKaryawan);
   } catch (error) {
@@ -23,6 +36,7 @@ export async function PUT(
       { status: 500 }
     );
   }
+  
 }
 
 export async function DELETE(

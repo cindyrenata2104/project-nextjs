@@ -34,6 +34,15 @@ export async function POST(request: Request) {
         status_kerja,
       }
     });
+    await prisma.riwayat.create({
+      data: {
+        id_karyawan : newKaryawan.id,
+        nama_karyawan: newKaryawan.nama,
+        jenis : "Karyawan",
+        aktivitas: "Menambah karyawan baru",
+        keterangan: `Karyawan baru ${newKaryawan.nama} dengan jabatan ${newKaryawan.jabatan} telah ditambahkan`,
+      }
+    })
 
     return NextResponse.json(newKaryawan, { status: 201 });
   } catch (error) {

@@ -31,6 +31,16 @@ export async function POST(request: Request) {
       }
     });
 
+    await prisma.riwayat.create({
+      data: {
+        id_barang : newInventory.id,
+        jenis_barang: newInventory.jenis_barang,
+        jenis : "Inventory",
+        aktivitas: "Menambah inventory baru",
+        keterangan: `Inventory baru ${newInventory.jenis_barang} dengan ukuran ${newInventory.ukuran} telah ditambahkan`,
+      }
+    })
+
     return NextResponse.json(newInventory, { status: 201 });
   } catch (error) {
     console.error("Error saat POST inventory:", error);

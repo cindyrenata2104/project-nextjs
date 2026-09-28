@@ -39,6 +39,7 @@ interface Inventory {
 
 export default function PeminjamanPage() {
   const [dataPeminjaman, setDataPeminjaman] = useState<Peminjaman[]>([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   // --- STATE UNTUK MODAL & DROPDOWN ---
@@ -68,6 +69,8 @@ export default function PeminjamanPage() {
   useEffect(() => {
     fetchPeminjaman();
   }, []);
+
+  
 
   // --- MENGAMBIL DATA DROPDOWN SAAT MODAL DIBUKA ---
   useEffect(() => {
@@ -122,12 +125,23 @@ export default function PeminjamanPage() {
     } catch (error) {
       console.error("Error:", error);
     }
-  };
+  }; 
 
   if (loading) {
     return <p className="p-5">Memuat data...</p>;
   }
+  // filter
+  const filteredData = dataPeminjaman.filter((item) => {
+    return (
+    item.id.toString().includes(search.toString())||
+    item.karyawan.nama.toLowerCase().includes(search.toLowerCase())||
+    item.inventory?.jenis_barang.toLowerCase().includes(search.toLowerCase()) 
 
+    )
+  }
+
+)
+  
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8 relative">
       {/* HEADER */}
@@ -141,7 +155,18 @@ export default function PeminjamanPage() {
           + Tambah Peminjaman
         </button>
       </div>
-      
+
+      {/* INPUT SEARCH */}
+<div className="mb-4">
+  <input
+    type="text"
+    placeholder="Cari berdasarkan ID, nama karyawan, atau barang..."
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    className="w-full border rounded-lg px-4 py-2"
+  />
+</div>
+
 
       {/* TABLE (Sama seperti sebelumnya) */}
       <table className="min-w-full border-collapse border border-gray-300">
@@ -157,7 +182,7 @@ export default function PeminjamanPage() {
           </tr>
         </thead>
         <tbody>
-          {dataPeminjaman.map((item) => (
+          {filteredData.map((item) => ( 
             <tr key={item.id} className="hover:bg-gray-50">
               <td className="border border-gray-300 px-4 py-2">{item.id}</td>
               <td className="border border-gray-300 px-4 py-2">{item.inventory.id}</td>

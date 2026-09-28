@@ -41,6 +41,21 @@ model Pengembalian {
   peminjaman           Peminjaman @relation(fields: [peminjaman_id], references: [id])
 }
 
+model Riwayat {
+  id              Int      @id @default(autoincrement())
+
+  id_karyawan     Int?
+  nama_karyawan   String?
+
+  id_barang       Int?
+  jenis_barang    String?
+
+  jenis           String
+  aktivitas       String
+  keterangan      String
+  tanggal         DateTime @default(now())
+}
+
 enum StatusInventory {
   inventory
   dipinjam

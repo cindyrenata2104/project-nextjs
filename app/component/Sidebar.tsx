@@ -12,6 +12,7 @@ export default function Sidebar() {
     { name: 'Inventory', href: '/inventory' },
     { name: 'Peminjaman', href: '/peminjaman' },
     { name: 'Pengembalian', href: '/pengembalian' },
+    { name: 'Riwayat', href: '/riwayat'},
   ];
 
   return (
