@@ -26,9 +26,6 @@ export async function PUT(
     });
 
     return NextResponse.json(updatedKaryawan);
-
-
-    return NextResponse.json(updatedKaryawan);
   } catch (error) {
     console.error("Error updating karyawan:", error);
     return NextResponse.json(
