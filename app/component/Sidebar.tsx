@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from 'next-auth/react';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -21,6 +22,7 @@ export default function Sidebar() {
         <h2 className="text-xl font-bold tracking-tight">Sistem Inventaris</h2>
       </div>
       <nav className="flex-1 px-4 space-y-2 mt-4">
+        
         {links.map((link) => {
           const isActive = pathname === link.href || (pathname === '/' && link.href === '/dashboard');
           return (
@@ -36,9 +38,17 @@ export default function Sidebar() {
               
               <span className="font-medium">{link.name}</span>
             </Link>
+            
+            
           );
-        })}
+        })}  
       </nav>
+      <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="w-full px-4 py-3 rounded-xl text-slate-300 hover:bg-red-600 hover:text-white transition-all"
+        >
+          Logout
+        </button>
       <div className="p-6 text-xs text-slate-500 text-center">
         © 2026 Sistem Inventaris
       </div>
