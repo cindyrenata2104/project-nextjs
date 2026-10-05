@@ -101,7 +101,7 @@ export async function POST(request: Request) {
           id: peminjaman.inventory_id,
         },
         data: {
-          status: 'inventory',
+          status: 'tersedia',
         },
       });
 

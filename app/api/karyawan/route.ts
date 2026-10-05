@@ -17,11 +17,11 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { nama, jabatan, periode, status_kerja } = body;
+    const { nama, jabatan, periode, tanggal_mulai, tanggal_selesai, status_kerja } = body;
 
-    if (!nama || !jabatan || !periode || !status_kerja) {
+    if (!nama || !jabatan || !tanggal_mulai || !status_kerja) {
       return NextResponse.json(
-        { error: "nama, jabatan, periode, dan status_kerja harus diisi" },
+        { error: "nama, jabatan, tanggal_mulai, dan status_kerja harus diisi" },
         { status: 400 }
       );
     }
@@ -31,6 +31,8 @@ export async function POST(request: Request) {
         nama,
         jabatan,
         periode,
+        tanggal_mulai: new Date(tanggal_mulai),
+        tanggal_selesai: new Date(tanggal_selesai), 
         status_kerja,
       }
     });

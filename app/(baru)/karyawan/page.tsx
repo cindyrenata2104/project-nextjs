@@ -6,15 +6,28 @@ interface Karyawan {
   id: number;
   nama: string;
   jabatan: string;
-  periode: string;
+  tanggal_mulai: string;
+  tanggal_selesai: string;
   status_kerja: string;
 };
+
+function formatTanggal(tanggal: string) {
+  const date = new Date (tanggal);
+
+   const formatter = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+
+  return formatter.format(date);
+}
 
 export default function KaryawanPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [karyawans, setKaryawans] = useState<Karyawan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ nama: '', jabatan: '', periode: '', status_kerja: 'active' });
+  const [form, setForm] = useState({ nama: '', jabatan: '', tanggal_mulai: '',tanggal_selesai: '', status_kerja: 'active' });
   const [search, setSearch] = useState(''); 
 
   useEffect(() => { 
@@ -41,7 +54,7 @@ export default function KaryawanPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
-      setForm({ nama: '', jabatan: '', periode: '', status_kerja: 'active' });
+      setForm({ nama: '', jabatan: '', tanggal_mulai:'', tanggal_selesai:'', status_kerja: 'active' });
       fetchKaryawan();
       setModalOpen(false);
     } catch (error) {
@@ -110,8 +123,10 @@ export default function KaryawanPage() {
                 <input type="text" className="w-full border rounded px-3 py-2" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} />
                 <label className="block text-sm font-medium mb-1">Jabatan</label>
                 <input type="text" className="w-full border rounded px-3 py-2" value={form.jabatan} onChange={(e) => setForm({ ...form, jabatan: e.target.value })} />
-                <label className="block text-sm font-medium mb-1">Periode</label>
-                <input type="text" className="w-full border rounded px-3 py-2" value={form.periode} onChange={(e) => setForm({ ...form, periode: e.target.value })} />
+                <label className="block text-sm font-medium mb-1">tanggal mulai</label>
+                <input type="date" className="w-full border rounded px-3 py-2" value={form.tanggal_mulai} onChange={(e) => setForm({ ...form, tanggal_mulai: e.target.value })} />
+                <label className="block text-sm font-medium mb-1">tanggal selesai</label>
+                <input type="date" className="w-full border rounded px-3 py-2" value={form.tanggal_selesai} min={form.tanggal_mulai} onChange={(e) => setForm({ ...form, tanggal_selesai: e.target.value })} />
                 <label className="block text-sm font-medium mb-1"> Status Kerja</label>
                 <input type="text" className="w-full border rounded px-3 py-2" value={form.status_kerja} onChange={(e) => setForm({ ...form, status_kerja: e.target.value })} />
               </div>
@@ -169,7 +184,7 @@ export default function KaryawanPage() {
                     <td className="p-4 text-gray-600">#{item.id}</td>
                     <td className="p-4 font-medium text-gray-800">{item.nama}</td>
                     <td className="p-4 text-gray-600">{item.jabatan}</td>
-                    <td className="p-4 text-gray-600">{item.periode}</td>
+                    <td className="p-4 text-gray-600">{formatTanggal(item.tanggal_mulai)} - {formatTanggal(item.tanggal_selesai)}</td>
                     <td className="p-4">
                       <button onClick = {() => toggleStatus(item.id, item.status_kerja)}
                       className = {`px-3 py-1 rounded-full text-xs font-medium ${item.status_kerja === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
