@@ -17,7 +17,7 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { nama, jabatan, periode, tanggal_mulai, tanggal_selesai, status_kerja } = body;
+    const { nama, jabatan, tanggal_mulai, tanggal_selesai, status_kerja } = body;
 
     if (!nama || !jabatan || !tanggal_mulai || !status_kerja) {
       return NextResponse.json(
@@ -30,17 +30,16 @@ export async function POST(request: Request) {
       data: {
         nama,
         jabatan,
-        periode,
         tanggal_mulai: new Date(tanggal_mulai),
-        tanggal_selesai: new Date(tanggal_selesai), 
+        tanggal_selesai: new Date(tanggal_selesai),
         status_kerja,
       }
     });
     await prisma.riwayat.create({
       data: {
-        id_karyawan : newKaryawan.id,
+        id_karyawan: newKaryawan.id,
         nama_karyawan: newKaryawan.nama,
-        jenis : "Karyawan",
+        jenis: "Karyawan",
         aktivitas: "Menambah karyawan baru",
         keterangan: `Karyawan baru ${newKaryawan.nama} dengan jabatan ${newKaryawan.jabatan} telah ditambahkan`,
       }
@@ -49,6 +48,7 @@ export async function POST(request: Request) {
     return NextResponse.json(newKaryawan, { status: 201 });
   } catch (error) {
     console.error("Error POST karyawan:", error);
+    console.error("Detail error:", JSON.stringify(error, null, 2));
     return NextResponse.json(
       { error: "Terjadi kesalahan saat menambahkan karyawan" },
       { status: 500 }

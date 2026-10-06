@@ -19,7 +19,6 @@ model Karyawan {
   id           Int          @id @default(autoincrement())
   nama         String
   jabatan      String
-  periode      String
   tanggal_mulai DateTime?
   tanggal_selesai DateTime?
   status_kerja StatusKerja

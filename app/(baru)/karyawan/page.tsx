@@ -12,9 +12,9 @@ interface Karyawan {
 };
 
 function formatTanggal(tanggal: string) {
-  const date = new Date (tanggal);
+  const date = new Date(tanggal);
 
-   const formatter = new Intl.DateTimeFormat('id-ID', {
+  const formatter = new Intl.DateTimeFormat('id-ID', {
     day: 'numeric',
     month: 'long',
     year: 'numeric'
@@ -27,10 +27,16 @@ export default function KaryawanPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [karyawans, setKaryawans] = useState<Karyawan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState({ nama: '', jabatan: '', tanggal_mulai: '',tanggal_selesai: '', status_kerja: 'active' });
-  const [search, setSearch] = useState(''); 
+  const [isEditModal, setEditModal] = useState(false);
+  const [idKaryawan, setIdKaryawan] = useState<number | null>(null);
+  const [isPeriode, setPeriode] = useState({
+    tanggal_mulai: '',
+    tanggal_selesai: '',
+  })
+  const [form, setForm] = useState({ nama: '', jabatan: '', tanggal_mulai: '', tanggal_selesai: '', status_kerja: 'active' });
+  const [search, setSearch] = useState('');
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchKaryawan();
   }, []);
 
@@ -46,67 +52,146 @@ export default function KaryawanPage() {
     }
   };
 
+  //HANDLE 
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await fetch('/api/karyawan', {
+      const response = await fetch('/api/karyawan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       });
-      setForm({ nama: '', jabatan: '', tanggal_mulai:'', tanggal_selesai:'', status_kerja: 'active' });
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Error dari API:", errorData);
+        return;
+      }
+      setForm({ nama: '', jabatan: '', tanggal_mulai: '', tanggal_selesai: '', status_kerja: 'active' });
       fetchKaryawan();
       setModalOpen(false);
     } catch (error) {
       console.error("Gagal menambahkan data karyawan", error);
     }
   };
-  //TOGGLE STATUS
-  const toggleStatus = async (id: number, currentStatus: string) => {
-    console.log("Tombol diklik! ID:", id, "Status saat ini:", currentStatus);
-    try{
-    const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-    const response = await fetch(`/api/karyawan/${id}`,
-       {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status_kerja: newStatus }),
+  const handleEdit = (item: Karyawan) => {
+    console.log("EDIT DIKLIK", item);
+    setIdKaryawan(item.id);
+    setPeriode({
+      tanggal_mulai: item.tanggal_mulai,
+      tanggal_selesai: item.tanggal_selesai,
+    });
+    setEditModal(true);
+    console.log("modal terbuka");
+  }
+
+  const handleSavePeriode = async()=>{
+    if (idKaryawan === null) return;
+    const response = await fetch(`/api/karyawan/${idKaryawan}`,
+      {
+      method: "PUT",
+      headers: {"content-type": "application/json"},
+      body: JSON.stringify(isPeriode),
     });
     if(response.ok){
       fetchKaryawan();
-    }
-  } catch(error) {
-    console.error("Gagal mengubah status karyawan", error);
-  };
+      setEditModal(false);
+    }else {
+  console.error("Gagal menyimpan periode");
+}
+  }
+
+  //TOGGLE STATUS
+  const toggleStatus = async (id: number, currentStatus: string) => {
+    console.log("Tombol diklik! ID:", id, "Status saat ini:", currentStatus);
+    try {
+      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
+      const response = await fetch(`/api/karyawan/${id}`,
+        {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status_kerja: newStatus }),
+        });
+      if (response.ok) {
+        fetchKaryawan();
+      }
+    } catch (error) {
+      console.error("Gagal mengubah status karyawan", error);
+    };
   };
 
   // FILTERING DATA BERDASARKAN SEARCH
   const filteredKaryawans = karyawans.filter((item) => {
     return (
-    item.id.toString().includes(search.toString()) ||
-    item.nama.toLowerCase().includes(search.toLowerCase())
+      item.id.toString().includes(search.toString()) ||
+      item.nama.toLowerCase().includes(search.toLowerCase())
     )
-  });  
- 
+  });
+
   return (
+
     <div className="p-8 max-w-6xl mx-auto space-y-8">
+      {isEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
+
+            <h2 className="text-xl font-bold mb-4">
+              Edit Periode Karyawan
+            </h2>
+            <label className="block text-sm font-medium mb-1">
+              Tanggal Mulai
+            </label>
+            <input
+              type="date"
+              className="w-full border rounded px-3 py-2"
+              value={isPeriode.tanggal_mulai}
+              onChange={(e) =>
+                setPeriode({
+                  ...isPeriode,
+                  tanggal_mulai: e.target.value,
+                })
+              }
+            />
+            <input
+              type="date"
+              className="w-full border rounded px-3 py-2"
+              value={isPeriode.tanggal_selesai}
+              min={isPeriode.tanggal_mulai}
+              onChange={(e) =>
+                setPeriode({
+                  ...isPeriode,
+                  tanggal_selesai: e.target.value,
+                })
+              }
+            />
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+              type = "button"
+              onClick={()=> setEditModal(false)}
+               className="bg-gray-300 px-4 py-2 rounded"
+              >Batal
+              </button>
+              </div>
+          </div>
+        </div>
+      )}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Manajemen Karyawan</h1>
         <button onClick={() => setModalOpen(true)} className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium">
           + Tambah Karyawan
         </button>
       </div>
-
       {/* INPUT SEARCH */}
-       <div>
-      <input
-        type="text"
-        placeholder="Cari berdasarkan ID atau nama..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full border rounded-lg px-4 py-2"
-      />
-    </div>
+      <div>
+        <input
+          type="text"
+          placeholder="Cari berdasarkan ID atau nama..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full border rounded-lg px-4 py-2"
+        />
+      </div>
 
       {/* JIKA isModalOpen true, TAMPILKAN BAGIAN INI: */}
       {isModalOpen && (
@@ -142,7 +227,8 @@ export default function KaryawanPage() {
                   Batal
                 </button>
 
-                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
+                <button type="button" className="bg-blue-500 text-white px-4 py-2 rounded"
+                onClick={handleSavePeriode}>
                   Simpan
                 </button>
               </div>
@@ -173,23 +259,26 @@ export default function KaryawanPage() {
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada data karyawan.</td>
                 </tr>
-              ) : filteredKaryawans.length === 0? (
+              ) : filteredKaryawans.length === 0 ? (
 
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada data karyawan.</td>
                 </tr>
-              ):
+              ) :
                 filteredKaryawans.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                     <td className="p-4 text-gray-600">#{item.id}</td>
                     <td className="p-4 font-medium text-gray-800">{item.nama}</td>
                     <td className="p-4 text-gray-600">{item.jabatan}</td>
-                    <td className="p-4 text-gray-600">{formatTanggal(item.tanggal_mulai)} - {formatTanggal(item.tanggal_selesai)}</td>
+                    <td className="p-4 text-gray-600">{formatTanggal(item.tanggal_mulai)} - {formatTanggal(item.tanggal_selesai)}
+                      <button onClick={() => handleEdit(item)} className=" text-white px-6 py-2.5 rounded-lg font-medium">
+                        ✏️</button>
+                    </td>
                     <td className="p-4">
-                      <button onClick = {() => toggleStatus(item.id, item.status_kerja)}
-                      className = {`px-3 py-1 rounded-full text-xs font-medium ${item.status_kerja === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                      <button onClick={() => toggleStatus(item.id, item.status_kerja)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${item.status_kerja === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
                         {item.status_kerja === 'active' ? 'active' : 'inactive'}
-                      </button> 
+                      </button>
                     </td>
                     <td className="p-4 text-right">
                     </td>
