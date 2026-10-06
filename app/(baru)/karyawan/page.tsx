@@ -78,8 +78,8 @@ export default function KaryawanPage() {
     console.log("EDIT DIKLIK", item);
     setIdKaryawan(item.id);
     setPeriode({
-      tanggal_mulai: item.tanggal_mulai,
-      tanggal_selesai: item.tanggal_selesai,
+      tanggal_mulai: item.tanggal_mulai.slice(0,10),
+      tanggal_selesai: item.tanggal_selesai.slice(0,10),
     });
     setEditModal(true);
     console.log("modal terbuka");
@@ -87,17 +87,22 @@ export default function KaryawanPage() {
 
   const handleSavePeriode = async()=>{
     if (idKaryawan === null) return;
+    const payloadData = {
+      tanggal_mulai: new Date(isPeriode.tanggal_mulai).toISOString(),
+      tanggal_selesai: new Date(isPeriode.tanggal_selesai).toISOString(),
+    };
     const response = await fetch(`/api/karyawan/${idKaryawan}`,
       {
       method: "PUT",
       headers: {"content-type": "application/json"},
-      body: JSON.stringify(isPeriode),
+      body: JSON.stringify(payloadData),
     });
     if(response.ok){
       fetchKaryawan();
       setEditModal(false);
     }else {
-  console.error("Gagal menyimpan periode");
+   const errorData = await response.json();
+  console.error("Gagal menyimpan periode:", errorData);
 }
   }
 
@@ -172,6 +177,12 @@ export default function KaryawanPage() {
                className="bg-gray-300 px-4 py-2 rounded"
               >Batal
               </button>
+              <button
+              type="button"
+              onClick={handleSavePeriode}
+               className="bg-blue-300 px-4 py-2 rounded">
+                Simpan
+              </button>
               </div>
           </div>
         </div>
@@ -227,8 +238,7 @@ export default function KaryawanPage() {
                   Batal
                 </button>
 
-                <button type="button" className="bg-blue-500 text-white px-4 py-2 rounded"
-                onClick={handleSavePeriode}>
+                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
                   Simpan
                 </button>
               </div>
