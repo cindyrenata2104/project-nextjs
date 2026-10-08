@@ -27,6 +27,7 @@ export default function KaryawanPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [karyawans, setKaryawans] = useState<Karyawan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [isEditModal, setEditModal] = useState(false);
   const [idKaryawan, setIdKaryawan] = useState<number | null>(null);
   const [isPeriode, setPeriode] = useState({
@@ -43,12 +44,19 @@ export default function KaryawanPage() {
   const fetchKaryawan = async () => {
     try {
       const res = await fetch('/api/karyawan');
+      if(!res.ok){
+        const errorData = await res.json()
+        setError(errorData.error);
+        return;
+      }
       const data = await res.json();
+      setError('');
       setKaryawans(data);
     } catch (error) {
       console.error("Failed to fetch karyawan", error);
+      setError("Gagal Menampilkan data karyawan");
     } finally {
-      setLoading(false);
+      setLoading(false); 
     }
   };
 
@@ -56,6 +64,16 @@ export default function KaryawanPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (
+    !form.nama ||
+    !form.jabatan ||
+    !form.tanggal_mulai ||
+    !form.tanggal_selesai
+  ) {
+    setError("Semua data wajib diisi");
+    return;
+    
+  }
     try {
       const response = await fetch('/api/karyawan', {
         method: 'POST',
@@ -64,14 +82,17 @@ export default function KaryawanPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
+        setError(errorData.error);
         console.error("Error dari API:", errorData);
         return;
       }
+      setError('');
       setForm({ nama: '', jabatan: '', tanggal_mulai: '', tanggal_selesai: '', status_kerja: 'active' });
       fetchKaryawan();
       setModalOpen(false);
     } catch (error) {
       console.error("Gagal menambahkan data karyawan", error);
+      setError("Gagal menambahkan data karyawan");
     }
   };
   const handleEdit = (item: Karyawan) => {
@@ -87,9 +108,11 @@ export default function KaryawanPage() {
 
   const handleSavePeriode = async()=>{
     if (idKaryawan === null) return;
+    try{
     const payloadData = {
       tanggal_mulai: new Date(isPeriode.tanggal_mulai).toISOString(),
       tanggal_selesai: new Date(isPeriode.tanggal_selesai).toISOString(),
+      info: "periode"
     };
     const response = await fetch(`/api/karyawan/${idKaryawan}`,
       {
@@ -98,11 +121,19 @@ export default function KaryawanPage() {
       body: JSON.stringify(payloadData),
     });
     if(response.ok){
+      setError('');
       fetchKaryawan();
       setEditModal(false);
+
     }else {
-   const errorData = await response.json();
+  const errorData = await response.json();
+  setError(errorData.error);
   console.error("Gagal menyimpan periode:", errorData);
+  return;
+  }
+  } catch (error) {
+  setError("Gagal menyimpan periode karyawan");
+  console.error("Gagal menyimpan periode:", error);
 }
   }
 
@@ -115,13 +146,18 @@ export default function KaryawanPage() {
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status_kerja: newStatus }),
+          body: JSON.stringify({ status_kerja: newStatus, info: "status" }),
         });
-      if (response.ok) {
-        fetchKaryawan();
+      if (!response.ok) {
+        const errorData = await response.json()
+        setError(errorData.error);
+        return;
       }
+      setError('');
+      fetchKaryawan();
     } catch (error) {
       console.error("Gagal mengubah status karyawan", error);
+      setError("Gagal mengubah status karyawan");
     };
   };
 
@@ -136,6 +172,9 @@ export default function KaryawanPage() {
   return (
 
     <div className="p-8 max-w-6xl mx-auto space-y-8">
+    {error&& (
+      <div className="text-red-600">{error}</div>
+    )}
       {isEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
 
@@ -189,9 +228,15 @@ export default function KaryawanPage() {
       )}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Manajemen Karyawan</h1>
-        <button onClick={() => setModalOpen(true)} className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium">
-          + Tambah Karyawan
-        </button>
+       <button
+  onClick={() => {
+    setError('');
+    setModalOpen(true);
+  }}
+  className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium"
+>
+  + Tambah Karyawan
+</button>
       </div>
       {/* INPUT SEARCH */}
       <div>
@@ -212,7 +257,12 @@ export default function KaryawanPage() {
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
             <h2 className="text-xl font-bold mb-4">Form Tambah Barang</h2>
 
-            <form onSubmit={handleCreate}>
+            <form onSubmit={handleCreate}noValidate>
+                {error && (
+    <div className="text-red-600 mb-4">
+      {error}
+    </div>
+  )}
               {/* Input Nama Barang */}
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">Nama Karyawan</label>
@@ -231,12 +281,15 @@ export default function KaryawanPage() {
               <div className="flex justify-end gap-2">
                 {/* Tombol Batal: Mengubah state kembali ke false untuk menutup pop-up */}
                 <button
-                  type="button"
-                  onClick={() => setModalOpen(false)}
-                  className="bg-gray-300 px-4 py-2 rounded"
-                >
-                  Batal
-                </button>
+  type="button"
+  onClick={() => {
+    setError('');
+    setModalOpen(false);
+  }}
+  className="bg-gray-300 px-4 py-2 rounded"
+>
+  Batal
+</button>
 
                 <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
                   Simpan

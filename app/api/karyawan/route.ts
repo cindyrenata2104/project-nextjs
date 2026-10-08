@@ -19,9 +19,9 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { nama, jabatan, tanggal_mulai, tanggal_selesai, status_kerja } = body;
 
-    if (!nama || !jabatan || !tanggal_mulai || !status_kerja) {
+    if (!nama || !jabatan || !tanggal_mulai || !tanggal_selesai || !status_kerja) {
       return NextResponse.json(
-        { error: "nama, jabatan, tanggal_mulai, dan status_kerja harus diisi" },
+        { error: "nama, jabatan, tanggal_mulai, tanggal_selesai, dan status_kerja harus diisi" },
         { status: 400 }
       );
     }

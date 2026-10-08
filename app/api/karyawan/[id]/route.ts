@@ -9,19 +9,26 @@ export async function PUT(
     const resolvedParams = await params;
     const id = parseInt(resolvedParams.id, 10);
     const body = await request.json();
+    const info = body.info;
+    let kegiatan =""
+    if(info === "periode"){
+      kegiatan = 'periode'
 
+
+    }else kegiatan = 'Status'
     const updatedKaryawan = await prisma.karyawan.update({
       where: { id },
-      data: body,
+      data: {tanggal_mulai:body.tanggal_mulai, tanggal_selesai:body.tanggal_selesai, status_kerja:body.status_kerja},
     });
+
     // Tambahkan pencatatan riwayat di sini
-    await prisma.riwayat.create({
+    const riwayat = await prisma.riwayat.create({
       data: {
         id_karyawan: updatedKaryawan.id,
         nama_karyawan: updatedKaryawan.nama,
         jenis: "Karyawan",
-        aktivitas: "Ubah Status Karyawan",
-        keterangan: `Status kerja karyawan ${updatedKaryawan.nama} telah diubah menjadi ${updatedKaryawan.status_kerja}`,
+        aktivitas: `Ubah ${kegiatan} Karyawan`,
+        keterangan: `${info === "periode" ? "Periode" : "Status"} kerja  karyawan ${updatedKaryawan.nama} telah diubah ${info === "periode" ? `menjadi periode ${updatedKaryawan.tanggal_mulai} sampai ${updatedKaryawan.tanggal_selesai}`: `menjadi ${updatedKaryawan.status_kerja}`}`,
       }
     });
 
