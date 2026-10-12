@@ -6,16 +6,16 @@ interface Pengembalian {
   id: number;
   peminjaman_id: number;
   tanggal_pengembalian: string;
-  peminjaman : {
+  peminjaman: {
     id: number;
     karyawan: {
-        id: number;
-        nama: string;
-        jabatan: string;
+      id: number;
+      nama: string;
+      jabatan: string;
     }
     inventory: {
-        jenis_barang: string;
-        ukuran: string;
+      jenis_barang: string;
+      ukuran: string;
     }
   };
 };
@@ -30,18 +30,25 @@ export default function PengembalianPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isModalOpen, setModalOpen] = useState(false);
+  const [globalError, setGlobalError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({
+    karyawan_id: '',
+    peminjaman_id: '',
+    tanggal_pengembalian: '',
+  });
   const [karyawanList, setKaryawanList] = useState<Karyawan[]>([]);
-  
+
   // State untuk menampung riwayat peminjaman (yang belum dikembalikan)
   const [peminjamanAktif, setPeminjamanAktif] = useState<any[]>([]);
-  
+
   // State untuk menampung daftar barang (peminjaman) spesifik untuk Karyawan yang dipilih
   const [barangDipinjam, setBarangDipinjam] = useState<any[]>([]);
-  
+
   const [formData, setFormData] = useState({
-      karyawan_id: "",
-      peminjaman_id: "", // Dulu pakai inventory_id, sekarang langsung pakai peminjaman_id
-      tanggal_pengembalian: "",
+    karyawan_id: "",
+    peminjaman_id: "", // Dulu pakai inventory_id, sekarang langsung pakai peminjaman_id
+    tanggal_pengembalian: "",
   });
 
   const fetchPengembalian = async () => {
@@ -72,9 +79,10 @@ export default function PengembalianPage() {
           // 2. Ambil data peminjaman aktif
           const resPeminjaman = await fetch("/api/peminjaman");
           if (resPeminjaman.ok) {
-             const dataPeminjaman = await resPeminjaman.json();
-             // Saring hanya yang belum dikembalikan
-             setPeminjamanAktif(dataPeminjaman.filter((p: any) => !p.Pengembalian));
+            const dataPeminjaman = await resPeminjaman.json();
+            setGlobalError('');
+            // Saring hanya yang belum dikembalikan
+            setPeminjamanAktif(dataPeminjaman.filter((p: any) => !p.Pengembalian));
           }
         } catch (error) {
           console.error("Gagal mengambil data dropdown", error);
@@ -103,8 +111,37 @@ export default function PengembalianPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.peminjaman_id) {
-      alert("Silakan pilih barang yang akan dikembalikan.");
+    const Errors: {
+      karyawan_id: string;
+      peminjaman_id: string;
+      tanggal_pengembalian: string;
+    } = {
+      karyawan_id: '',
+      peminjaman_id: '',
+      tanggal_pengembalian: '',
+    };
+
+    if (!formData.karyawan_id.trim()) {
+      Errors.karyawan_id = "Karyawan wajib dipilih!";
+    }
+
+    if (!formData.peminjaman_id.trim()) {
+      Errors.peminjaman_id = "Wajib pilih barang yang akan dikembalikan!";
+    }
+
+    if (!formData.tanggal_pengembalian.trim()) {
+      Errors.tanggal_pengembalian = "Tanggal pengembalian wajib diisi";
+    }
+
+    setFormError('');
+
+    setFieldErrors({
+      karyawan_id: Errors.karyawan_id,
+      peminjaman_id: Errors.peminjaman_id,
+      tanggal_pengembalian: Errors.tanggal_pengembalian,
+    });
+
+    if (Object.values(Errors).some((error) => error !== '')) {
       return;
     }
 
@@ -120,26 +157,35 @@ export default function PengembalianPage() {
 
       if (response.ok) {
         setModalOpen(false);
-        setFormData({ karyawan_id: "", peminjaman_id: "", tanggal_pengembalian: "" });
+        setGlobalError('');
+        setFormError('');
+        setFormData({
+          karyawan_id: "",
+          peminjaman_id: "",
+          tanggal_pengembalian: ""
+        });
         fetchPengembalian();
       } else {
-        alert("Gagal menambahkan data pengembalian");
+        const errorData = await response.json();
+        setFormError(errorData.error);
       }
+
     } catch (error) {
       console.error("Error:", error);
+      setFormError("Terjadi kesalahan saat menghubungi server");
     }
-  };
+  }
   //FILLTER 
   const fillteredData = dataPengembalian.filter((item) => {
-  return (
-    item.id.toString().includes(search.toString()) ||
-    item.peminjaman?.karyawan.nama.toLowerCase().includes(search.toLowerCase()) ||
-    item.peminjaman?.inventory?.jenis_barang.toLowerCase().includes(search.toLowerCase())
-  )
+    return (
+      item.id.toString().includes(search.toString()) ||
+      item.peminjaman?.karyawan.nama.toLowerCase().includes(search.toLowerCase()) ||
+      item.peminjaman?.inventory?.jenis_barang.toLowerCase().includes(search.toLowerCase())
+    )
   }
- )
+  )
   return (
-     <div className="p-8 max-w-6xl mx-auto space-y-8">
+    <div className="p-8 max-w-6xl mx-auto space-y-8">
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
@@ -153,18 +199,18 @@ export default function PengembalianPage() {
         >
           + Tambah Pengembalian
         </button>
-        
+
       </div>
       {/* INPUT SEARCH */}
-<div className="mb-4">
-  <input
-    type="text"
-    placeholder="Cari berdasarkan ID, nama karyawan, atau barang..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    className="w-full border rounded-lg px-4 py-2"
-  />
-</div>
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Cari berdasarkan ID, nama karyawan, atau barang..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full border rounded-lg px-4 py-2"
+        />
+      </div>
 
       <table className="min-w-full border-collapse border border-gray-300">
         <thead>
@@ -182,20 +228,20 @@ export default function PengembalianPage() {
           {fillteredData.map((item) => (
             <tr key={item.id} className="hover:bg-gray-50">
               <td className="border border-gray-300 px-4 py-2">{item.id}</td>
-              
+
               <td className="border border-gray-300 px-4 py-2">
                 {item.peminjaman?.id ? item.peminjaman.id : "Tidak ada data"}
               </td>
               <td className="border border-gray-300 px-4 py-2">
                 {item.peminjaman?.karyawan?.id ? item.peminjaman.karyawan.id : "Tidak ada data"}
               </td>
-               <td className="border border-gray-300 px-4 py-2">
+              <td className="border border-gray-300 px-4 py-2">
                 {item.peminjaman?.karyawan?.nama ? item.peminjaman.karyawan.nama : "Tidak ada data"}
               </td>
               <td className="border border-gray-300 px-4 py-2">
                 {item.peminjaman?.karyawan?.jabatan ? item.peminjaman.karyawan.jabatan : "-"}
               </td>
-              
+
               <td className="border border-gray-300 px-4 py-2">
                 {item.peminjaman?.inventory?.jenis_barang ? item.peminjaman.inventory.jenis_barang : "Barang tidak ditemukan"}
               </td>
@@ -209,10 +255,13 @@ export default function PengembalianPage() {
 
       {/* MODAL TAMBAH PENGEMBALIAN */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 transition-all duration-300 scale-100 opacity-100">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold">Tambah Pengembalian</h2>
+              {formError && (
+                <div className="text-red-600 mb-4 font-semibold">{formError}</div>
+              )}
               <button
                 onClick={() => setModalOpen(false)}
                 className="text-gray-500 hover:text-gray-700 text-2xl font-bold"
@@ -220,7 +269,7 @@ export default function PengembalianPage() {
                 &times;
               </button>
             </div>
-            
+
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* Dropdown Karyawan */}
               <div>
@@ -228,7 +277,7 @@ export default function PengembalianPage() {
                   Karyawan (Peminjam)
                 </label>
                 <select
-                  required
+
                   className="w-full border border-gray-300 rounded px-3 py-2"
                   value={formData.karyawan_id}
                   onChange={(e) => setFormData({ ...formData, karyawan_id: e.target.value })}
@@ -240,6 +289,9 @@ export default function PengembalianPage() {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.karyawan_id && (
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.karyawan_id}</p>
+                )}
               </div>
 
               {/* Dropdown Barang (Otomatis filter barang milik Karyawan yang dipilih) */}
@@ -248,7 +300,7 @@ export default function PengembalianPage() {
                   Barang yang Dikembalikan
                 </label>
                 <select
-                  required
+
                   className="w-full border border-gray-300 rounded px-3 py-2 disabled:bg-gray-100"
                   value={formData.peminjaman_id}
                   onChange={(e) => setFormData({ ...formData, peminjaman_id: e.target.value })}
@@ -261,6 +313,10 @@ export default function PengembalianPage() {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.peminjaman_id && (
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.peminjaman_id}</p>
+                )}
+
                 {!formData.karyawan_id && (
                   <p className="text-xs text-gray-500 mt-1">Pilih karyawan terlebih dahulu</p>
                 )}
@@ -276,11 +332,14 @@ export default function PengembalianPage() {
                 </label>
                 <input
                   type="date"
-                  required
+
                   className="w-full border border-gray-300 rounded px-3 py-2"
                   value={formData.tanggal_pengembalian}
                   onChange={(e) => setFormData({ ...formData, tanggal_pengembalian: e.target.value })}
                 />
+                {fieldErrors.tanggal_pengembalian && (
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.tanggal_pengembalian}</p>
+                )}
               </div>
 
               <div className="flex justify-end pt-4">
@@ -294,7 +353,7 @@ export default function PengembalianPage() {
                 <button
                   type="submit"
                   className="bg-blue-600 text-white px-4 py-2 rounded"
-                  disabled={!formData.karyawan_id || !formData.peminjaman_id}
+
                 >
                   Simpan
                 </button>

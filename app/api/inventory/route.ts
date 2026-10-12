@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     const { jenis_barang, ukuran, status } = body;
 
     if (!jenis_barang || !ukuran || !status) {
+      console.error("Field harus diisi", body);
       return NextResponse.json(
         { error: "jenis_barang, ukuran, dan status harus diisi" },
         { status: 400 }

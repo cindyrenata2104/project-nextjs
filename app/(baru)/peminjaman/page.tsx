@@ -41,6 +41,13 @@ export default function PeminjamanPage() {
   const [dataPeminjaman, setDataPeminjaman] = useState<Peminjaman[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const[globalError, setGlobalError]= useState('');
+  const[formError, setFormError]=useState('');
+  const [fieldErrors, setFieldErrors] = useState({
+    karyawan_id: '',
+    inventory_id: '',
+    tanggal_peminjaman: '',
+  });
 
   // --- STATE UNTUK MODAL & DROPDOWN ---
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,12 +61,17 @@ export default function PeminjamanPage() {
 
   // --- MENGAMBIL DATA PEMINJAMAN UTAMA ---
   const fetchPeminjaman = async () => {
-    try {
+    try { 
       const response = await fetch("/api/peminjaman");
-      if (!response.ok) throw new Error("Gagal mengambil data peminjaman");
+      if (!response.ok){
+        const errorData = await response.json();
+        setGlobalError(errorData.error);
+        return;
+      }
       const data = await response.json();
+      setGlobalError('');
       setDataPeminjaman(data);
-    } catch (error) {
+    } catch (error) {  
       console.error("Gagal mengambil data:", error);
     } finally {
       setLoading(false);
@@ -70,7 +82,7 @@ export default function PeminjamanPage() {
     fetchPeminjaman();
   }, []);
 
-  
+
 
   // --- MENGAMBIL DATA DROPDOWN SAAT MODAL DIBUKA ---
   useEffect(() => {
@@ -103,6 +115,33 @@ export default function PeminjamanPage() {
   // --- HANDLER SUBMIT FORM ---
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const Errors: {
+  karyawan_id: string;
+  inventory_id: string;
+  tanggal_peminjaman: string;
+} = {
+  karyawan_id: '',
+  inventory_id: '',
+  tanggal_peminjaman: '',
+};
+
+if (!formData.karyawan_id.trim()) {
+  Errors.karyawan_id = 'Karyawan wajib diisi';
+}
+
+if (!formData.inventory_id.trim()) {
+  Errors.inventory_id = 'Inventory wajib diisi';
+}
+
+if (!formData.tanggal_peminjaman.trim()) {
+  Errors.tanggal_peminjaman = 'Tanggal peminjaman wajib diisi';
+}
+
+setFieldErrors(Errors);
+
+if (Object.values(Errors).some((error) => error !== '')) {
+  return;
+}
     try {
       const response = await fetch("/api/peminjaman", {
         method: "POST",
@@ -115,17 +154,21 @@ export default function PeminjamanPage() {
       });
 
       if (response.ok) {
+        setGlobalError('');
         // Jika sukses, tutup modal, reset form, dan ambil data ulang agar tabel terupdate
         setIsModalOpen(false);
+        setGlobalError('');
         setFormData({ karyawan_id: "", inventory_id: "", tanggal_peminjaman: "" });
         fetchPeminjaman();
       } else {
+        const errorData = await response.json();
+        setFormError(errorData.error);
         alert("Gagal menambahkan peminjaman");
-      }
+      } 
     } catch (error) {
       console.error("Error:", error);
     }
-  }; 
+  };
 
   if (loading) {
     return <p className="p-5">Memuat data...</p>;
@@ -133,17 +176,23 @@ export default function PeminjamanPage() {
   // filter
   const filteredData = dataPeminjaman.filter((item) => {
     return (
-    item.id.toString().includes(search.toString())||
-    item.karyawan.nama.toLowerCase().includes(search.toLowerCase())||
-    item.inventory?.jenis_barang.toLowerCase().includes(search.toLowerCase()) 
+      item.id.toString().includes(search.toString()) ||
+      item.karyawan.nama.toLowerCase().includes(search.toLowerCase()) ||
+      item.inventory?.jenis_barang.toLowerCase().includes(search.toLowerCase())
 
     )
   }
 
-)
-  
+  )
+
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8 relative">
+      {globalError && (
+  <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+    {globalError}
+  </div>
+)}
+
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Data Peminjaman Barang</h1>
@@ -157,15 +206,15 @@ export default function PeminjamanPage() {
       </div>
 
       {/* INPUT SEARCH */}
-<div className="mb-4">
-  <input
-    type="text"
-    placeholder="Cari berdasarkan ID, nama karyawan, atau barang..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    className="w-full border rounded-lg px-4 py-2"
-  />
-</div>
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Cari berdasarkan ID, nama karyawan, atau barang..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="w-full border rounded-lg px-4 py-2"
+        />
+      </div>
 
 
       {/* TABLE (Sama seperti sebelumnya) */}
@@ -181,8 +230,8 @@ export default function PeminjamanPage() {
             <th className="border border-gray-300 px-4 py-2 text-left">Tanggal Pinjam</th>
           </tr>
         </thead>
-        <tbody>
-          {filteredData.map((item) => ( 
+        <tbody> 
+          {filteredData.map((item) => (
             <tr key={item.id} className="hover:bg-gray-50">
               <td className="border border-gray-300 px-4 py-2">{item.id}</td>
               <td className="border border-gray-300 px-4 py-2">{item.inventory.id}</td>
@@ -198,17 +247,20 @@ export default function PeminjamanPage() {
 
       {/* --- POP-UP MODAL FORM --- */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 transition-all duration-300 scale-100 opacity-100">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Tambah Peminjaman</h2>
-            
+            {formError && (
+  <div className="text-red-600 mb-4 font-semibold">{formError}</div>
+)}
+
             <form onSubmit={handleSubmit} className="space-y-4">
-              
+
               {/* DROPDOWN KARYAWAN */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nama Karyawan</label>
                 <select
-                  required
+                  
                   value={formData.karyawan_id}
                   onChange={(e) => setFormData({ ...formData, karyawan_id: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500"
@@ -220,13 +272,16 @@ export default function PeminjamanPage() {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.karyawan_id && (
+                    <p className="text-red-500 text-sm mt-1">{fieldErrors.karyawan_id}</p>
+                    )}
               </div>
 
               {/* DROPDOWN INVENTORY / JENIS BARANG */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Barang Tersedia</label>
                 <select
-                  required
+                  
                   value={formData.inventory_id}
                   onChange={(e) => setFormData({ ...formData, inventory_id: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500"
@@ -238,6 +293,9 @@ export default function PeminjamanPage() {
                     </option>
                   ))}
                 </select>
+                {fieldErrors.inventory_id && (
+                    <p className="text-red-500 text-sm mt-1">{fieldErrors.inventory_id}</p>
+                    )}
               </div>
 
               {/* INPUT TANGGAL PEMINJAMAN */}
@@ -245,11 +303,14 @@ export default function PeminjamanPage() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Peminjaman</label>
                 <input
                   type="date"
-                  required
+                  
                   value={formData.tanggal_peminjaman}
                   onChange={(e) => setFormData({ ...formData, tanggal_peminjaman: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500"
                 />
+                {fieldErrors.tanggal_peminjaman && (
+                    <p className="text-red-500 text-sm mt-1">{fieldErrors.tanggal_peminjaman}</p>
+                    )}
               </div>
 
               {/* BUTTONS */}

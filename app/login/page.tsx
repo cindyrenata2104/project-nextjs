@@ -10,23 +10,24 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     setError("");
-
+    setLoading(true);
     const result = await signIn("credentials", {
       email,
-      password,
+      password, 
       redirect: false,
     });
-
+    
     if (result?.error) {
       setError("Email atau password salah");
+      setLoading(false);
       return;
     }
-
     router.push("/dashboard");
     router.refresh();
   }
@@ -104,9 +105,11 @@ export default function LoginPage() {
             {/* Button */}
             <button
               type="submit"
-              className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700"
-            >
-              Login
+              disabled={isLoading} 
+              className="w-full rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white transition hover:bg-blue-700" 
+            > 
+              {isLoading? "Memuat Login":"Login"} 
+
             </button>
 
           </form>

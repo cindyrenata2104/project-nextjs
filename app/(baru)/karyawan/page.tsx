@@ -27,7 +27,16 @@ export default function KaryawanPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [karyawans, setKaryawans] = useState<Karyawan[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
+  const [globalError, setGlobalError] = useState('');
+  const [formError, setFormError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({
+    nama: '',
+    jabatan: '',
+    tanggal_mulai: '',
+    tanggal_selesai: '',
+    status_kerja: '',
+  });
   const [isEditModal, setEditModal] = useState(false);
   const [idKaryawan, setIdKaryawan] = useState<number | null>(null);
   const [isPeriode, setPeriode] = useState({
@@ -39,24 +48,24 @@ export default function KaryawanPage() {
 
   useEffect(() => {
     fetchKaryawan();
-  }, []);
+  }, []); 
 
   const fetchKaryawan = async () => {
     try {
       const res = await fetch('/api/karyawan');
-      if(!res.ok){
+      if (!res.ok) {
         const errorData = await res.json()
-        setError(errorData.error);
+        setGlobalError(errorData.error);
         return;
       }
       const data = await res.json();
-      setError('');
+      setGlobalError('');
       setKaryawans(data);
     } catch (error) {
       console.error("Failed to fetch karyawan", error);
-      setError("Gagal Menampilkan data karyawan");
+      setGlobalError("Gagal Menampilkan data karyawan");
     } finally {
-      setLoading(false); 
+      setLoading(false);
     }
   };
 
@@ -64,17 +73,50 @@ export default function KaryawanPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors = {
+      nama: '',
+      jabatan: '',
+      tanggal_mulai: '',
+      tanggal_selesai: '',
+      status_kerja: '',
+    };
+
+    if (!form.nama.trim()) {
+      errors.nama = 'Nama wajib diisi';
+    }
+
+    if (!form.jabatan.trim()) {
+      errors.jabatan = 'Jabatan wajib diisi';
+    }
+
+    if (!form.tanggal_mulai) {
+      errors.tanggal_mulai = 'Tanggal mulai wajib diisi';
+    }
+
+    if (!form.tanggal_selesai) {
+      errors.tanggal_selesai = 'Tanggal selesai wajib diisi';
+    }
+
     if (
-    !form.nama ||
-    !form.jabatan ||
-    !form.tanggal_mulai ||
-    !form.tanggal_selesai
-  ) {
-    setError("Semua data wajib diisi");
-    return;
-    
-  }
+      form.tanggal_mulai &&
+      form.tanggal_selesai &&
+      form.tanggal_selesai < form.tanggal_mulai
+    ) {
+      errors.tanggal_selesai =
+        'Tanggal selesai tidak boleh sebelum tanggal mulai';
+    }
+
+    if (!form.status_kerja.trim()) {
+      errors.status_kerja = 'Status kerja wajib diisi';
+    }
+
+    setFieldErrors(errors);
+
+    if (Object.values(errors).some((error) => error !== '')) {
+      return;
+    }
     try {
+      setIsLoadingSubmit(true);
       const response = await fetch('/api/karyawan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,59 +124,59 @@ export default function KaryawanPage() {
       });
       if (!response.ok) {
         const errorData = await response.json();
-        setError(errorData.error);
+        setFormError(errorData.error);
         console.error("Error dari API:", errorData);
         return;
       }
-      setError('');
+      setFormError('');
       setForm({ nama: '', jabatan: '', tanggal_mulai: '', tanggal_selesai: '', status_kerja: 'active' });
       fetchKaryawan();
       setModalOpen(false);
     } catch (error) {
       console.error("Gagal menambahkan data karyawan", error);
-      setError("Gagal menambahkan data karyawan");
+      setFormError("Gagal menambahkan data karyawan");
     }
   };
   const handleEdit = (item: Karyawan) => {
     console.log("EDIT DIKLIK", item);
     setIdKaryawan(item.id);
     setPeriode({
-      tanggal_mulai: item.tanggal_mulai.slice(0,10),
-      tanggal_selesai: item.tanggal_selesai.slice(0,10),
+      tanggal_mulai: item.tanggal_mulai.slice(0, 10),
+      tanggal_selesai: item.tanggal_selesai.slice(0, 10),
     });
     setEditModal(true);
     console.log("modal terbuka");
   }
 
-  const handleSavePeriode = async()=>{
+  const handleSavePeriode = async () => {
     if (idKaryawan === null) return;
-    try{
-    const payloadData = {
-      tanggal_mulai: new Date(isPeriode.tanggal_mulai).toISOString(),
-      tanggal_selesai: new Date(isPeriode.tanggal_selesai).toISOString(),
-      info: "periode"
-    };
-    const response = await fetch(`/api/karyawan/${idKaryawan}`,
-      {
-      method: "PUT",
-      headers: {"content-type": "application/json"},
-      body: JSON.stringify(payloadData),
-    });
-    if(response.ok){
-      setError('');
-      fetchKaryawan();
-      setEditModal(false);
+    try {
+      const payloadData = {
+        tanggal_mulai: new Date(isPeriode.tanggal_mulai).toISOString(),
+        tanggal_selesai: new Date(isPeriode.tanggal_selesai).toISOString(),
+        info: "periode"
+      };
+      const response = await fetch(`/api/karyawan/${idKaryawan}`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payloadData),
+        });
+      if (response.ok) {
+        setFormError('');
+        fetchKaryawan();
+        setEditModal(false);
 
-    }else {
-  const errorData = await response.json();
-  setError(errorData.error);
-  console.error("Gagal menyimpan periode:", errorData);
-  return;
-  }
-  } catch (error) {
-  setError("Gagal menyimpan periode karyawan");
-  console.error("Gagal menyimpan periode:", error);
-}
+      } else {
+        const errorData = await response.json();
+        setFormError(errorData.error);
+        console.error("Gagal menyimpan periode:", errorData);
+        return;
+      }
+    } catch (error) {
+      setFormError("Gagal menyimpan periode karyawan");
+      console.error("Gagal menyimpan periode:", error);
+    }
   }
 
   //TOGGLE STATUS
@@ -150,14 +192,14 @@ export default function KaryawanPage() {
         });
       if (!response.ok) {
         const errorData = await response.json()
-        setError(errorData.error);
+        setGlobalError(errorData.error);
         return;
       }
-      setError('');
+      setGlobalError('');
       fetchKaryawan();
     } catch (error) {
       console.error("Gagal mengubah status karyawan", error);
-      setError("Gagal mengubah status karyawan");
+      setGlobalError("Gagal mengubah status karyawan");
     };
   };
 
@@ -172,9 +214,12 @@ export default function KaryawanPage() {
   return (
 
     <div className="p-8 max-w-6xl mx-auto space-y-8">
-    {error&& (
-      <div className="text-red-600">{error}</div>
-    )}
+      {globalError && (
+        <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+          {globalError}
+        </div>
+      )}
+     
       {isEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
 
@@ -183,6 +228,9 @@ export default function KaryawanPage() {
             <h2 className="text-xl font-bold mb-4">
               Edit Periode Karyawan
             </h2>
+            {formError && (
+              <div className="text-red-600 mb-4">{formError}</div>
+            )} 
             <label className="block text-sm font-medium mb-1">
               Tanggal Mulai
             </label>
@@ -211,32 +259,33 @@ export default function KaryawanPage() {
             />
             <div className="flex justify-end gap-2 mt-6">
               <button
-              type = "button"
-              onClick={()=> setEditModal(false)}
-               className="bg-gray-300 px-4 py-2 rounded"
+                type="button"
+                onClick={() => setEditModal(false)}
+                className="bg-gray-300 px-4 py-2 rounded"
               >Batal
               </button>
               <button
-              type="button"
-              onClick={handleSavePeriode}
-               className="bg-blue-300 px-4 py-2 rounded">
+                type="button"
+                onClick={handleSavePeriode}
+                className="bg-blue-300 px-4 py-2 rounded">
                 Simpan
               </button>
-              </div>
+            </div>
           </div>
         </div>
       )}
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-800">Manajemen Karyawan</h1>
-       <button
-  onClick={() => {
-    setError('');
-    setModalOpen(true);
-  }}
-  className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium"
->
-  + Tambah Karyawan
-</button>
+        <button
+          onClick={() => {
+            setFormError('');
+            setGlobalError('');
+            setModalOpen(true);
+          }}
+          className="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium"
+        >
+          + Tambah Karyawan
+        </button>
       </div>
       {/* INPUT SEARCH */}
       <div>
@@ -251,48 +300,114 @@ export default function KaryawanPage() {
 
       {/* JIKA isModalOpen true, TAMPILKAN BAGIAN INI: */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 flex justify-center items-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 transition-all duration-300 scale-100 opacity-100">
+            <h2 className="text-xl font-bold mb-4">Form Tambah Karyawan</h2>
 
-          {/* KOTAK MODAL PUTIH */}
-          <div className="bg-white p-6 rounded-lg shadow-lg w-1/3">
-            <h2 className="text-xl font-bold mb-4">Form Tambah Barang</h2>
-
-            <form onSubmit={handleCreate}noValidate>
-                {error && (
-    <div className="text-red-600 mb-4">
-      {error}
-    </div>
-  )}
+            <form onSubmit={handleCreate} noValidate>
+              {formError && (
+                <div className="text-red-600 mb-4">
+                  {formError}
+                </div>
+              )}
               {/* Input Nama Barang */}
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-1">Nama Karyawan</label>
-                <input type="text" className="w-full border rounded px-3 py-2" value={form.nama} onChange={(e) => setForm({ ...form, nama: e.target.value })} />
+                <input
+                  type="text"
+                  className="w-full border rounded px-3 py-2"
+                  value={form.nama}
+                  onChange={(e) =>
+                    setForm({ ...form, nama: e.target.value })
+                  }
+                />
+
+                {fieldErrors.nama && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.nama}
+                  </p>
+                )}
                 <label className="block text-sm font-medium mb-1">Jabatan</label>
-                <input type="text" className="w-full border rounded px-3 py-2" value={form.jabatan} onChange={(e) => setForm({ ...form, jabatan: e.target.value })} />
+                <input
+                  type="text"
+                  className="w-full border rounded px-3 py-2"
+                  value={form.jabatan}
+                  onChange={(e) =>
+                    setForm({ ...form, jabatan: e.target.value })
+                  }
+                />
+
+                {fieldErrors.jabatan && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.jabatan}
+                  </p>
+                )}
                 <label className="block text-sm font-medium mb-1">tanggal mulai</label>
-                <input type="date" className="w-full border rounded px-3 py-2" value={form.tanggal_mulai} onChange={(e) => setForm({ ...form, tanggal_mulai: e.target.value })} />
+                <input
+                  type="date"
+                  className="w-full border rounded px-3 py-2"
+                  value={form.tanggal_mulai}
+                  onChange={(e) =>
+                    setForm({ ...form, tanggal_mulai: e.target.value })
+                  }
+                />
+
+                {fieldErrors.tanggal_mulai && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.tanggal_mulai}
+                  </p>
+                )}
                 <label className="block text-sm font-medium mb-1">tanggal selesai</label>
-                <input type="date" className="w-full border rounded px-3 py-2" value={form.tanggal_selesai} min={form.tanggal_mulai} onChange={(e) => setForm({ ...form, tanggal_selesai: e.target.value })} />
+                <input
+                  type="date"
+                  className="w-full border rounded px-3 py-2"
+                  value={form.tanggal_selesai}
+                  min={form.tanggal_mulai}
+                  onChange={(e) =>
+                    setForm({ ...form, tanggal_selesai: e.target.value })
+                  }
+                />
+
+                {fieldErrors.tanggal_selesai && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.tanggal_selesai}
+                  </p>
+                )}
                 <label className="block text-sm font-medium mb-1"> Status Kerja</label>
-                <input type="text" className="w-full border rounded px-3 py-2" value={form.status_kerja} onChange={(e) => setForm({ ...form, status_kerja: e.target.value })} />
+                <input
+                  type="text"
+                  className="w-full border rounded px-3 py-2"
+                  value={form.status_kerja}
+                  onChange={(e) =>
+                    setForm({ ...form, status_kerja: e.target.value })
+                  }
+                />
+
+                {fieldErrors.status_kerja && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {fieldErrors.status_kerja}
+                  </p>
+                )}
               </div>
 
               {/* Tombol Aksi */}
               <div className="flex justify-end gap-2">
                 {/* Tombol Batal: Mengubah state kembali ke false untuk menutup pop-up */}
                 <button
-  type="button"
-  onClick={() => {
-    setError('');
-    setModalOpen(false);
-  }}
-  className="bg-gray-300 px-4 py-2 rounded"
->
-  Batal
-</button>
+                  type="button"
+                  onClick={() => {
+                    setFormError('');
+                    setModalOpen(false);
+                  }}
+                  className="bg-gray-300 px-4 py-2 rounded"
+                >
+                  Batal
+                </button>
 
-                <button type="submit" className="bg-blue-500 text-white px-4 py-2 rounded">
-                  Simpan
+                <button type="submit" 
+                disabled={isLoadingSubmit}
+                className="bg-blue-500 text-white px-4 py-2 rounded">
+                   {isLoadingSubmit ? "Menyimpan..." : "Simpan"}
                 </button>
               </div>
             </form>

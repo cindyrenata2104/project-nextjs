@@ -20,7 +20,8 @@ export async function POST(request: Request) {
     const { nama, jabatan, tanggal_mulai, tanggal_selesai, status_kerja } = body;
 
     if (!nama || !jabatan || !tanggal_mulai || !tanggal_selesai || !status_kerja) {
-      return NextResponse.json(
+      console.error("Validasi Error: Ada field yang belum diisi oleh user!", body)
+      return NextResponse.json( 
         { error: "nama, jabatan, tanggal_mulai, tanggal_selesai, dan status_kerja harus diisi" },
         { status: 400 }
       );
