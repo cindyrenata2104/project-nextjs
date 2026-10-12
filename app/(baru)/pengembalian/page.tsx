@@ -28,6 +28,7 @@ interface Karyawan {
 export default function PengembalianPage() {
   const [dataPengembalian, setDataPengembalian] = useState<Pengembalian[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isLoadingSubmit, setLoadingSubmit] = useState(false);
   const [search, setSearch] = useState('');
   const [isModalOpen, setModalOpen] = useState(false);
   const [globalError, setGlobalError] = useState('');
@@ -47,12 +48,14 @@ export default function PengembalianPage() {
 
   const [formData, setFormData] = useState({
     karyawan_id: "",
-    peminjaman_id: "", // Dulu pakai inventory_id, sekarang langsung pakai peminjaman_id
+    peminjaman_id: "", 
     tanggal_pengembalian: "",
   });
 
   const fetchPengembalian = async () => {
+    setLoading(true);
     try {
+      await new Promise((resolve) => setTimeout(resolve, 200)); 
       const response = await fetch('/api/pengembalian');
       const data = await response.json();
       setDataPengembalian(data);
@@ -72,6 +75,8 @@ export default function PengembalianPage() {
     if (isModalOpen) {
       const fetchDropdownData = async () => {
         try {
+          setLoading(true);
+        await new Promise((resolve) => setTimeout(resolve, 800));
           // 1. Ambil data karyawan
           const resKaryawan = await fetch("/api/karyawan");
           if (resKaryawan.ok) setKaryawanList(await resKaryawan.json());
@@ -90,6 +95,7 @@ export default function PengembalianPage() {
       };
 
       fetchDropdownData();
+      
     }
   }, [isModalOpen]);
 
@@ -146,6 +152,8 @@ export default function PengembalianPage() {
     }
 
     try {
+      setLoadingSubmit(true);
+      await new Promise((resolve) => setTimeout(resolve, 600));
       const response = await fetch("/api/pengembalian", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -173,6 +181,8 @@ export default function PengembalianPage() {
     } catch (error) {
       console.error("Error:", error);
       setFormError("Terjadi kesalahan saat menghubungi server");
+    }finally{
+      setLoadingSubmit(false);
     }
   }
   //FILLTER 
@@ -225,31 +235,45 @@ export default function PengembalianPage() {
           </tr>
         </thead>
         <tbody>
-          {fillteredData.map((item) => (
-            <tr key={item.id} className="hover:bg-gray-50">
-              <td className="border border-gray-300 px-4 py-2">{item.id}</td>
-
-              <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman?.id ? item.peminjaman.id : "Tidak ada data"}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman?.karyawan?.id ? item.peminjaman.karyawan.id : "Tidak ada data"}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman?.karyawan?.nama ? item.peminjaman.karyawan.nama : "Tidak ada data"}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman?.karyawan?.jabatan ? item.peminjaman.karyawan.jabatan : "-"}
-              </td>
-
-              <td className="border border-gray-300 px-4 py-2">
-                {item.peminjaman?.inventory?.jenis_barang ? item.peminjaman.inventory.jenis_barang : "Barang tidak ditemukan"}
-              </td>
-              <td className="border border-gray-300 px-4 py-2">
-                {new Date(item.tanggal_pengembalian).toLocaleDateString('id-ID')}
+           {loading ? (
+            <tr>
+              <td colSpan={7} className="border border-gray-300 p-8 text-center text-gray-500">
+                Memperbarui data...
               </td>
             </tr>
-          ))}
+          ) : fillteredData.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="border border-gray-300 p-8 text-center text-gray-500">
+                Tidak ada data pengembalian.
+              </td>
+            </tr>
+          ) : (
+            fillteredData.map((item) => (
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="border border-gray-300 px-4 py-2">{item.id}</td>
+
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.peminjaman?.id ? item.peminjaman.id : "Tidak ada data"}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.peminjaman?.karyawan?.id ? item.peminjaman.karyawan.id : "Tidak ada data"}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.peminjaman?.karyawan?.nama ? item.peminjaman.karyawan.nama : "Tidak ada data"}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.peminjaman?.karyawan?.jabatan ? item.peminjaman.karyawan.jabatan : "-"}
+                </td>
+
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.peminjaman?.inventory?.jenis_barang ? item.peminjaman.inventory.jenis_barang : "Barang tidak ditemukan"}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {new Date(item.tanggal_pengembalian).toLocaleDateString('id-ID')}
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 

@@ -29,6 +29,8 @@ export default function InventoryPage() {
 
   const fetchInventory = async () => {
     try {
+      setLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 600));
       const res = await fetch('/api/inventory');
       if(!res.ok){
         const errorData = await res.json();

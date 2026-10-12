@@ -48,10 +48,12 @@ export default function KaryawanPage() {
 
   useEffect(() => {
     fetchKaryawan();
-  }, []); 
+  }, []);
 
   const fetchKaryawan = async () => {
     try {
+      setLoading(true);
+      await new Promise((resolve) => setTimeout(resolve, 600));
       const res = await fetch('/api/karyawan');
       if (!res.ok) {
         const errorData = await res.json()

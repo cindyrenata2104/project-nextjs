@@ -41,8 +41,10 @@ export default function PeminjamanPage() {
   const [dataPeminjaman, setDataPeminjaman] = useState<Peminjaman[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const[globalError, setGlobalError]= useState('');
-  const[formError, setFormError]=useState('');
+  const [loadingDropdown, setLoadingDropdown] = useState(false);
+  const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
+  const [globalError, setGlobalError] = useState('');
+  const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({
     karyawan_id: '',
     inventory_id: '',
@@ -61,9 +63,11 @@ export default function PeminjamanPage() {
 
   // --- MENGAMBIL DATA PEMINJAMAN UTAMA ---
   const fetchPeminjaman = async () => {
-    try { 
+      try {
+         setLoading(true);
+         await new Promise((resolve) => setTimeout(resolve, 600));
       const response = await fetch("/api/peminjaman");
-      if (!response.ok){
+      if (!response.ok) {
         const errorData = await response.json();
         setGlobalError(errorData.error);
         return;
@@ -71,7 +75,7 @@ export default function PeminjamanPage() {
       const data = await response.json();
       setGlobalError('');
       setDataPeminjaman(data);
-    } catch (error) {  
+    } catch (error) {
       console.error("Gagal mengambil data:", error);
     } finally {
       setLoading(false);
@@ -88,6 +92,7 @@ export default function PeminjamanPage() {
   useEffect(() => {
     if (isModalOpen) {
       const fetchDropdownData = async () => {
+        setLoadingDropdown(true);
         try {
           // Ambil data karyawan
           const resKaryawan = await fetch("/api/karyawan");
@@ -97,14 +102,16 @@ export default function PeminjamanPage() {
 
           // Ambil data inventory (barang)
           const resInventory = await fetch("/api/inventory");
-          if (resInventory.ok) {
+          if (resInventory.ok) { 
             const allInventory = await resInventory.json();
             // Filter agar HANYA barang yang berstatus "inventory" (belum dipinjam) yang muncul di dropdown
-            const availableInventory = allInventory.filter((item: Inventory) => item.status === "inventory");
+            const availableInventory = allInventory.filter((item: Inventory) => item.status === "tersedia");
             setInventoryList(availableInventory);
           }
         } catch (error) {
           console.error("Gagal mengambil data dropdown", error);
+        } finally {
+          setLoadingDropdown(false);
         }
       };
 
@@ -116,33 +123,34 @@ export default function PeminjamanPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const Errors: {
-  karyawan_id: string;
-  inventory_id: string;
-  tanggal_peminjaman: string;
-} = {
-  karyawan_id: '',
-  inventory_id: '',
-  tanggal_peminjaman: '',
-};
+      karyawan_id: string;
+      inventory_id: string;
+      tanggal_peminjaman: string;
+    } = {
+      karyawan_id: '',
+      inventory_id: '',
+      tanggal_peminjaman: '',
+    };
 
-if (!formData.karyawan_id.trim()) {
-  Errors.karyawan_id = 'Karyawan wajib diisi';
-}
+    if (!formData.karyawan_id.trim()) {
+      Errors.karyawan_id = 'Karyawan wajib diisi';
+    }
 
-if (!formData.inventory_id.trim()) {
-  Errors.inventory_id = 'Inventory wajib diisi';
-}
+    if (!formData.inventory_id.trim()) {
+      Errors.inventory_id = 'Inventory wajib diisi';
+    }
 
-if (!formData.tanggal_peminjaman.trim()) {
-  Errors.tanggal_peminjaman = 'Tanggal peminjaman wajib diisi';
-}
+    if (!formData.tanggal_peminjaman.trim()) {
+      Errors.tanggal_peminjaman = 'Tanggal peminjaman wajib diisi';
+    }
 
-setFieldErrors(Errors);
+    setFieldErrors(Errors);
 
-if (Object.values(Errors).some((error) => error !== '')) {
-  return;
-}
+    if (Object.values(Errors).some((error) => error !== '')) {
+      return;
+    }
     try {
+      setIsLoadingSubmit(true);
       const response = await fetch("/api/peminjaman", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -164,15 +172,14 @@ if (Object.values(Errors).some((error) => error !== '')) {
         const errorData = await response.json();
         setFormError(errorData.error);
         alert("Gagal menambahkan peminjaman");
-      } 
+      }
     } catch (error) {
       console.error("Error:", error);
+    } finally {
+      setIsLoadingSubmit(false);
     }
   };
 
-  if (loading) {
-    return <p className="p-5">Memuat data...</p>;
-  }
   // filter
   const filteredData = dataPeminjaman.filter((item) => {
     return (
@@ -188,10 +195,10 @@ if (Object.values(Errors).some((error) => error !== '')) {
   return (
     <div className="p-8 max-w-6xl mx-auto space-y-8 relative">
       {globalError && (
-  <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
-    {globalError}
-  </div>
-)}
+        <div className="bg-red-100 text-red-700 p-4 rounded-lg mb-4">
+          {globalError}
+        </div>
+      )}
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
@@ -230,18 +237,40 @@ if (Object.values(Errors).some((error) => error !== '')) {
             <th className="border border-gray-300 px-4 py-2 text-left">Tanggal Pinjam</th>
           </tr>
         </thead>
-        <tbody> 
-          {filteredData.map((item) => (
-            <tr key={item.id} className="hover:bg-gray-50">
-              <td className="border border-gray-300 px-4 py-2">{item.id}</td>
-              <td className="border border-gray-300 px-4 py-2">{item.inventory.id}</td>
-              <td className="border border-gray-300 px-4 py-2">{item.karyawan.id}</td>
-              <td className="border border-gray-300 px-4 py-2">{item.karyawan ? item.karyawan.nama : "Tidak ada data"}</td>
-              <td className="border border-gray-300 px-4 py-2">{item.karyawan ? item.karyawan.jabatan : "-"}</td>
-              <td className="border border-gray-300 px-4 py-2">{item.inventory ? item.inventory.jenis_barang : "Barang tidak ditemukan"}</td>
-              <td className="border border-gray-300 px-4 py-2">{new Date(item.tanggal_peminjaman).toLocaleDateString("id-ID")}</td>
+        <tbody>
+          {loading ? (
+            <tr>
+              <td colSpan={7} className="border border-gray-300 p-8 text-center text-gray-500">
+                Memperbarui data...
+              </td>
             </tr>
-          ))}
+          ) : filteredData.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="border border-gray-300 p-8 text-center text-gray-500">
+                Tidak ada data peminjaman.
+              </td>
+            </tr>
+          ) : (
+            filteredData.map((item) => (
+              <tr key={item.id} className="hover:bg-gray-50">
+                <td className="border border-gray-300 px-4 py-2">{item.id}</td>
+                <td className="border border-gray-300 px-4 py-2">{item.inventory.id}</td>
+                <td className="border border-gray-300 px-4 py-2">{item.karyawan.id}</td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.karyawan ? item.karyawan.nama : "Tidak ada data"}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.karyawan ? item.karyawan.jabatan : "-"}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {item.inventory ? item.inventory.jenis_barang : "Barang tidak ditemukan"}
+                </td>
+                <td className="border border-gray-300 px-4 py-2">
+                  {new Date(item.tanggal_peminjaman).toLocaleDateString("id-ID")}
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
 
@@ -251,8 +280,8 @@ if (Object.values(Errors).some((error) => error !== '')) {
           <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 transition-all duration-300 scale-100 opacity-100">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Tambah Peminjaman</h2>
             {formError && (
-  <div className="text-red-600 mb-4 font-semibold">{formError}</div>
-)}
+              <div className="text-red-600 mb-4 font-semibold">{formError}</div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
 
@@ -260,8 +289,9 @@ if (Object.values(Errors).some((error) => error !== '')) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Nama Karyawan</label>
                 <select
-                  
+
                   value={formData.karyawan_id}
+                  disabled={loadingDropdown}
                   onChange={(e) => setFormData({ ...formData, karyawan_id: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500"
                 >
@@ -273,15 +303,15 @@ if (Object.values(Errors).some((error) => error !== '')) {
                   ))}
                 </select>
                 {fieldErrors.karyawan_id && (
-                    <p className="text-red-500 text-sm mt-1">{fieldErrors.karyawan_id}</p>
-                    )}
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.karyawan_id}</p>
+                )}
               </div>
 
               {/* DROPDOWN INVENTORY / JENIS BARANG */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Jenis Barang Tersedia</label>
                 <select
-                  
+
                   value={formData.inventory_id}
                   onChange={(e) => setFormData({ ...formData, inventory_id: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500"
@@ -294,8 +324,8 @@ if (Object.values(Errors).some((error) => error !== '')) {
                   ))}
                 </select>
                 {fieldErrors.inventory_id && (
-                    <p className="text-red-500 text-sm mt-1">{fieldErrors.inventory_id}</p>
-                    )}
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.inventory_id}</p>
+                )}
               </div>
 
               {/* INPUT TANGGAL PEMINJAMAN */}
@@ -303,14 +333,14 @@ if (Object.values(Errors).some((error) => error !== '')) {
                 <label className="block text-sm font-medium text-gray-700 mb-1">Tanggal Peminjaman</label>
                 <input
                   type="date"
-                  
+
                   value={formData.tanggal_peminjaman}
                   onChange={(e) => setFormData({ ...formData, tanggal_peminjaman: e.target.value })}
                   className="w-full border border-gray-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500"
                 />
                 {fieldErrors.tanggal_peminjaman && (
-                    <p className="text-red-500 text-sm mt-1">{fieldErrors.tanggal_peminjaman}</p>
-                    )}
+                  <p className="text-red-500 text-sm mt-1">{fieldErrors.tanggal_peminjaman}</p>
+                )}
               </div>
 
               {/* BUTTONS */}
@@ -324,9 +354,10 @@ if (Object.values(Errors).some((error) => error !== '')) {
                 </button>
                 <button
                   type="submit"
+                  disabled={isLoadingSubmit}
                   className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
                 >
-                  Simpan
+                 {isLoadingSubmit?"Memuat data...":"Simpan"}
                 </button>
               </div>
             </form>
