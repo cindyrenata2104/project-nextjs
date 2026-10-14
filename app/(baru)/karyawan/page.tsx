@@ -8,7 +8,6 @@ interface Karyawan {
   jabatan: string;
   tanggal_mulai: string;
   tanggal_selesai: string;
-  status_kerja: string;
 };
 
 function formatTanggal(tanggal: string) {
@@ -20,22 +19,38 @@ function formatTanggal(tanggal: string) {
     year: 'numeric'
   });
 
+  
   return formatter.format(date);
 }
+function hitungStatus(tanggalMulai: string, tanggalSelesai: string) {
+  const sekarang = new Date();
+  sekarang.setHours(0, 0, 0, 0);
+
+  const mulai = new Date(tanggalMulai);
+  mulai.setHours(0, 0, 0, 0);
+
+  const selesai = new Date(tanggalSelesai);
+  selesai.setHours(0, 0, 0, 0);
+
+  if (sekarang < mulai) return "Belum Aktif";
+  if (sekarang > selesai) return "Inactive";
+
+  return "Active";
+}  
 
 export default function KaryawanPage() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [karyawans, setKaryawans] = useState<Karyawan[]>([]);
   const [loading, setLoading] = useState(true);
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
+  const [isLoadingPeriode, setIsLoadingPeriode] = useState(false);
   const [globalError, setGlobalError] = useState('');
-  const [formError, setFormError] = useState('');
+  const [formError, setFormError] = useState(''); 
   const [fieldErrors, setFieldErrors] = useState({
     nama: '',
     jabatan: '',
     tanggal_mulai: '',
     tanggal_selesai: '',
-    status_kerja: '',
   });
   const [isEditModal, setEditModal] = useState(false);
   const [idKaryawan, setIdKaryawan] = useState<number | null>(null);
@@ -43,7 +58,7 @@ export default function KaryawanPage() {
     tanggal_mulai: '',
     tanggal_selesai: '',
   })
-  const [form, setForm] = useState({ nama: '', jabatan: '', tanggal_mulai: '', tanggal_selesai: '', status_kerja: 'active' });
+  const [form, setForm] = useState({ nama: '', jabatan: '', tanggal_mulai: '', tanggal_selesai: '' });
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -80,7 +95,6 @@ export default function KaryawanPage() {
       jabatan: '',
       tanggal_mulai: '',
       tanggal_selesai: '',
-      status_kerja: '',
     };
 
     if (!form.nama.trim()) {
@@ -107,11 +121,6 @@ export default function KaryawanPage() {
       errors.tanggal_selesai =
         'Tanggal selesai tidak boleh sebelum tanggal mulai';
     }
-
-    if (!form.status_kerja.trim()) {
-      errors.status_kerja = 'Status kerja wajib diisi';
-    }
-
     setFieldErrors(errors);
 
     if (Object.values(errors).some((error) => error !== '')) {
@@ -131,12 +140,15 @@ export default function KaryawanPage() {
         return;
       }
       setFormError('');
-      setForm({ nama: '', jabatan: '', tanggal_mulai: '', tanggal_selesai: '', status_kerja: 'active' });
+      setForm({ nama: '', jabatan: '', tanggal_mulai: '', tanggal_selesai: '' });
       fetchKaryawan();
       setModalOpen(false);
     } catch (error) {
       console.error("Gagal menambahkan data karyawan", error);
       setFormError("Gagal menambahkan data karyawan");
+    }
+     finally {
+      setIsLoadingSubmit(false);
     }
   };
   const handleEdit = (item: Karyawan) => {
@@ -153,6 +165,7 @@ export default function KaryawanPage() {
   const handleSavePeriode = async () => {
     if (idKaryawan === null) return;
     try {
+      setIsLoadingPeriode(true);
       const payloadData = {
         tanggal_mulai: new Date(isPeriode.tanggal_mulai).toISOString(),
         tanggal_selesai: new Date(isPeriode.tanggal_selesai).toISOString(),
@@ -179,31 +192,12 @@ export default function KaryawanPage() {
       setFormError("Gagal menyimpan periode karyawan");
       console.error("Gagal menyimpan periode:", error);
     }
+    finally {
+      setIsLoadingPeriode(false);
+    }
   }
 
-  //TOGGLE STATUS
-  const toggleStatus = async (id: number, currentStatus: string) => {
-    console.log("Tombol diklik! ID:", id, "Status saat ini:", currentStatus);
-    try {
-      const newStatus = currentStatus === 'active' ? 'inactive' : 'active';
-      const response = await fetch(`/api/karyawan/${id}`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status_kerja: newStatus, info: "status" }),
-        });
-      if (!response.ok) {
-        const errorData = await response.json()
-        setGlobalError(errorData.error);
-        return;
-      }
-      setGlobalError('');
-      fetchKaryawan();
-    } catch (error) {
-      console.error("Gagal mengubah status karyawan", error);
-      setGlobalError("Gagal mengubah status karyawan");
-    };
-  };
+
 
   // FILTERING DATA BERDASARKAN SEARCH
   const filteredKaryawans = karyawans.filter((item) => {
@@ -375,21 +369,6 @@ export default function KaryawanPage() {
                     {fieldErrors.tanggal_selesai}
                   </p>
                 )}
-                <label className="block text-sm font-medium mb-1"> Status Kerja</label>
-                <input
-                  type="text"
-                  className="w-full border rounded px-3 py-2"
-                  value={form.status_kerja}
-                  onChange={(e) =>
-                    setForm({ ...form, status_kerja: e.target.value })
-                  }
-                />
-
-                {fieldErrors.status_kerja && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {fieldErrors.status_kerja}
-                  </p>
-                )}
               </div>
 
               {/* Tombol Aksi */}
@@ -433,37 +412,66 @@ export default function KaryawanPage() {
             <tbody className="divide-y divide-gray-100">
               {loading ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">Memuat data...</td>
+                  <td colSpan={5} className="p-8 text-center text-gray-500">Memuat data...</td>
                 </tr>
               ) : karyawans.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada data karyawan.</td>
+                  <td colSpan={5} className="p-8 text-center text-gray-500">Tidak ada data karyawan.</td>
                 </tr>
               ) : filteredKaryawans.length === 0 ? (
 
                 <tr>
-                  <td colSpan={6} className="p-8 text-center text-gray-500">Tidak ada data karyawan.</td>
+                  <td colSpan={5} className="p-8 text-center text-gray-500">Tidak ada data karyawan.</td>
                 </tr>
               ) :
-                filteredKaryawans.map((item) => (
-                  <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="p-4 text-gray-600">#{item.id}</td>
-                    <td className="p-4 font-medium text-gray-800">{item.nama}</td>
-                    <td className="p-4 text-gray-600">{item.jabatan}</td>
-                    <td className="p-4 text-gray-600">{formatTanggal(item.tanggal_mulai)} - {formatTanggal(item.tanggal_selesai)}
-                      <button onClick={() => handleEdit(item)} className=" text-white px-6 py-2.5 rounded-lg font-medium">
-                        ✏️</button>
-                    </td>
-                    <td className="p-4">
-                      <button onClick={() => toggleStatus(item.id, item.status_kerja)}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${item.status_kerja === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                        {item.status_kerja === 'active' ? 'active' : 'inactive'}
-                      </button>
-                    </td>
-                    <td className="p-4 text-right">
-                    </td>
-                  </tr>
-                ))
+                
+            filteredKaryawans.map((item) => {
+              const status = hitungStatus(
+                item.tanggal_mulai,
+                item.tanggal_selesai
+              );
+
+              return (
+                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="p-4 text-gray-600">#{item.id}</td>
+
+                  <td className="p-4 font-medium text-gray-800">
+                    {item.nama}
+                  </td>
+
+                  <td className="p-4 text-gray-600">
+                    {item.jabatan}
+                  </td>
+
+                  <td className="p-4 text-gray-600">
+                    {formatTanggal(item.tanggal_mulai)} -{" "}
+                    {formatTanggal(item.tanggal_selesai)}
+                    <button
+                      type="button"
+                      onClick={() => handleEdit(item)}
+                      className="ml-2 px-2 py-1 rounded"
+                    >
+                      ✏️
+                    </button>
+                  </td>
+
+                  <td className="p-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        status === "Active"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : status === "Inactive"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })
+
               }
             </tbody>
           </table>

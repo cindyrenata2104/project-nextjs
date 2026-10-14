@@ -139,19 +139,15 @@ export default function InventoryPage() {
                 <div className="mb-4">
                   {formError && <div className="text-red-600 mb-4 font-semibold">{formError}</div>}
                   <label className="block text-sm font-medium mb-1">Jenis Barang</label>
-                  <select
-                
+                  <input
+                    type="text"
                     className="w-full border rounded px-3 py-2 mb-3"
                     value={form.jenis_barang}
                     onChange={(e) => setForm({ ...form, jenis_barang: e.target.value })}
-                  >
-                    <option value="">-- Pilih Jenis Barang --</option>
-                    <option value="seragam">Seragam</option>
-                    <option value="sepatu">Sepatu</option>
-                  </select>
+                  />
                   {fieldErrors.jenis_barang && (
                     <p className="text-red-500 text-sm mt-1">{fieldErrors.jenis_barang}</p>
-                    )}
+                  )}
                   <label className="block text-sm font-medium mb-1">Ukuran</label>
                   <input
                     type="text"

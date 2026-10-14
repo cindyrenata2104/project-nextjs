@@ -17,12 +17,12 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { nama, jabatan, tanggal_mulai, tanggal_selesai, status_kerja } = body;
+    const { nama, jabatan, tanggal_mulai, tanggal_selesai } = body;
 
-    if (!nama || !jabatan || !tanggal_mulai || !tanggal_selesai || !status_kerja) {
+    if (!nama || !jabatan || !tanggal_mulai || !tanggal_selesai) {
       console.error("Validasi Error: Ada field yang belum diisi oleh user!", body)
       return NextResponse.json( 
-        { error: "nama, jabatan, tanggal_mulai, tanggal_selesai, dan status_kerja harus diisi" },
+        { error: "nama, jabatan, tanggal_mulai, dan tanggal_selesai harus diisi" },
         { status: 400 }
       );
     }
@@ -33,7 +33,6 @@ export async function POST(request: Request) {
         jabatan,
         tanggal_mulai: new Date(tanggal_mulai),
         tanggal_selesai: new Date(tanggal_selesai),
-        status_kerja,
       }
     });
     await prisma.riwayat.create({

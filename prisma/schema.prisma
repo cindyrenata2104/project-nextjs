@@ -21,7 +21,6 @@ model Karyawan {
   jabatan      String
   tanggal_mulai DateTime?
   tanggal_selesai DateTime?
-  status_kerja StatusKerja
   Peminjaman   Peminjaman[]
 }
 
@@ -66,9 +65,5 @@ enum StatusInventory {
   dipinjam
 }
 
-enum StatusKerja {
-  active
-  inactive
-}
 
 

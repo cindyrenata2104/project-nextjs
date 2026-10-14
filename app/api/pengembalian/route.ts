@@ -105,15 +105,6 @@ export async function POST(request: Request) {
         },
       });
 
-      //ubah status karyawan menjadi inactive
-      await tx.karyawan.update({
-        where:{
-          id: peminjaman.karyawan_id,
-        },  
-        data:{
-          status_kerja: 'inactive', 
-        }
-      })
 
       await tx.riwayat.create({
         data:{
