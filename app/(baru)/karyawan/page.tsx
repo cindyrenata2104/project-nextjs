@@ -19,7 +19,7 @@ function formatTanggal(tanggal: string) {
     year: 'numeric'
   });
 
-  
+
   return formatter.format(date);
 }
 function hitungStatus(tanggalMulai: string, tanggalSelesai: string) {
@@ -36,7 +36,7 @@ function hitungStatus(tanggalMulai: string, tanggalSelesai: string) {
   if (sekarang > selesai) return "Inactive";
 
   return "Active";
-}  
+}
 
 export default function KaryawanPage() {
   const [isModalOpen, setModalOpen] = useState(false);
@@ -45,7 +45,7 @@ export default function KaryawanPage() {
   const [isLoadingSubmit, setIsLoadingSubmit] = useState(false);
   const [isLoadingPeriode, setIsLoadingPeriode] = useState(false);
   const [globalError, setGlobalError] = useState('');
-  const [formError, setFormError] = useState(''); 
+  const [formError, setFormError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({
     nama: '',
     jabatan: '',
@@ -147,7 +147,7 @@ export default function KaryawanPage() {
       console.error("Gagal menambahkan data karyawan", error);
       setFormError("Gagal menambahkan data karyawan");
     }
-     finally {
+    finally {
       setIsLoadingSubmit(false);
     }
   };
@@ -215,7 +215,7 @@ export default function KaryawanPage() {
           {globalError}
         </div>
       )}
-     
+
       {isEditModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
 
@@ -226,7 +226,7 @@ export default function KaryawanPage() {
             </h2>
             {formError && (
               <div className="text-red-600 mb-4">{formError}</div>
-            )} 
+            )}
             <label className="block text-sm font-medium mb-1">
               Tanggal Mulai
             </label>
@@ -385,10 +385,10 @@ export default function KaryawanPage() {
                   Batal
                 </button>
 
-                <button type="submit" 
-                disabled={isLoadingSubmit}
-                className="bg-blue-500 text-white px-4 py-2 rounded">
-                   {isLoadingSubmit ? "Menyimpan..." : "Simpan"}
+                <button type="submit"
+                  disabled={isLoadingSubmit}
+                  className="bg-blue-500 text-white px-4 py-2 rounded">
+                  {isLoadingSubmit ? "Menyimpan..." : "Simpan"}
                 </button>
               </div>
             </form>
@@ -424,53 +424,52 @@ export default function KaryawanPage() {
                   <td colSpan={5} className="p-8 text-center text-gray-500">Tidak ada data karyawan.</td>
                 </tr>
               ) :
-                
-            filteredKaryawans.map((item) => {
-              const status = hitungStatus(
-                item.tanggal_mulai,
-                item.tanggal_selesai
-              );
 
-              return (
-                <tr key={item.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="p-4 text-gray-600">#{item.id}</td>
+                filteredKaryawans.map((item) => {
+                  const status = hitungStatus(
+                    item.tanggal_mulai,
+                    item.tanggal_selesai
+                  );
 
-                  <td className="p-4 font-medium text-gray-800">
-                    {item.nama}
-                  </td>
+                  return (
+                    <tr key={item.id} className="hover:bg-gray-50 transition-colors">
+                      <td className="p-4 text-gray-600">#{item.id}</td>
 
-                  <td className="p-4 text-gray-600">
-                    {item.jabatan}
-                  </td>
+                      <td className="p-4 font-medium text-gray-800">
+                        {item.nama}
+                      </td>
 
-                  <td className="p-4 text-gray-600">
-                    {formatTanggal(item.tanggal_mulai)} -{" "}
-                    {formatTanggal(item.tanggal_selesai)}
-                    <button
-                      type="button"
-                      onClick={() => handleEdit(item)}
-                      className="ml-2 px-2 py-1 rounded"
-                    >
-                      ✏️
-                    </button>
-                  </td>
+                      <td className="p-4 text-gray-600">
+                        {item.jabatan}
+                      </td>
 
-                  <td className="p-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        status === "Active"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : status === "Inactive"
-                            ? "bg-red-100 text-red-700"
-                            : "bg-amber-100 text-amber-700"
-                      }`}
-                    >
-                      {status}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })
+                      <td className="p-4 text-gray-600">
+                        {formatTanggal(item.tanggal_mulai)} -{" "}
+                        {formatTanggal(item.tanggal_selesai)}
+                        <button
+                          type="button"
+                          onClick={() => handleEdit(item)}
+                          className="ml-2 px-2 py-1 rounded"
+                        >
+                          ✏️
+                        </button>
+                      </td>
+
+                      <td className="p-4">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-medium ${status === "Active"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : status === "Inactive"
+                                ? "bg-red-100 text-red-700"
+                                : "bg-amber-100 text-amber-700"
+                            }`}
+                        >
+                          {status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
 
               }
             </tbody>
