@@ -3,11 +3,14 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "./component/Sidebar";
 
-
+export const metadata: Metadata ={ 
+  title : "Sistem Inventaris",
+  description: "Aplikasi untuk mengelola inventaris barang",
+}
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
-});
+}); 
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",

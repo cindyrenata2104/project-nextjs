@@ -33,35 +33,43 @@ export default function DashboardPage() {
   const [inventoris, setInventoris] = useState<Inventory[]>([]);
   const [peminjamans, setPeminjamans] = useState<Peminjaman[]>([]);
   const [pengembalians, setPengembalians] = useState<Pengembalian[]>([]);
-  const dataGrafik = [
-    "januari",
-    "februari",
-    "maret",
-    "april",
+  const tahunPeminjaman = peminjamans.map((item) => {
+    return new Date(item.tanggal_peminjaman).getFullYear();
+  });
+
+  const tahunUnik = [...new Set(tahunPeminjaman)];
+  tahunUnik.sort((a, b) => a - b);
+  const dataGrafik = tahunUnik.flatMap((tahun) => [
+    "jan",
+    "feb",
+    "mar",
+    "apr",
     "mei",
-    "juni",
-    "juli",
-    "agustus",
-    "september",
-    "oktober",
-    "november",
-    "desember",
+    "jun",
+    "jul",
+    "agu",
+    "sep",
+    "okt",
+    "nov",
+    "des",
   ].map((bulan, index) => {
     const jumlahPeminjaman = peminjamans.filter((item) => {
       const tanggal = new Date(item.tanggal_peminjaman);
-      return tanggal.getMonth() === index;
+      return tanggal.getFullYear() === tahun &&
+        tanggal.getMonth() === index;
     }).length;
     const jumlahPengembalian = pengembalians.filter((item) => {
       const tanggal = new Date(item.tanggal_pengembalian);
-      return tanggal.getMonth() === index;
+      return tanggal.getFullYear() === tahun &&
+        tanggal.getMonth() === index;
     }).length;
     return {
-      bulan: bulan,
+      bulan: `${bulan} ${tahun}`,
       peminjaman: jumlahPeminjaman,
       pengembalian: jumlahPengembalian,
     }
-  }
-  )
+  }));
+
 
 
   // MUNCULIN DATA KARYAWAN
@@ -164,7 +172,13 @@ export default function DashboardPage() {
         <ResponsiveContainer>
           <BarChart data={dataGrafik}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="bulan" />
+           <XAxis
+              dataKey="bulan"
+              interval={0}
+              angle={-45}
+              textAnchor="end"
+              height={70}
+            /> 
             <YAxis />
             <Bar dataKey="peminjaman" fill='#00cc40'
             />

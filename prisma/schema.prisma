@@ -8,13 +8,24 @@ datasource db {
 }
 
 model Inventory {
-  id           Int             @id @default(autoincrement())
-  jenis_barang String
-  ukuran       String
-  status       StatusInventory
-  Peminjaman   Peminjaman[]
+  id              Int             @id @default(autoincrement())
+  kode_barang     String           @default("")
+  jenis_barang    String
+  jenis_barang_id Int?
+  ukuran          String
+  status          StatusInventory
+
+  Peminjaman  Peminjaman[]
+  jenisBarang JenisBarang? @relation(fields: [jenis_barang_id], references: [id])
 }
 
+model JenisBarang {
+  id           Int         @id @default(autoincrement())
+  jenis_barang String
+  Inventory    Inventory[]
+}
+
+ 
 model Karyawan {
   id           Int          @id @default(autoincrement())
   nama         String
