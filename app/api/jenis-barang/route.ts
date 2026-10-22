@@ -23,6 +23,15 @@ export async function GET(){
                     jenis_barang: data.jenis_barang,
                 },
             });
+            await prisma.riwayat.create({
+      data: {
+        id_barang : newJenisBarang.id,
+        jenis_barang: newJenisBarang.jenis_barang,
+        jenis : "Kategori Barang",
+        aktivitas: "Menambah jenis barang baru",
+        keterangan: `Jenis barang baru ${newJenisBarang.jenis_barang} telah ditambahkan`,
+      }
+    })
             return NextResponse.json(newJenisBarang, {status: 201});
         }catch(error){
             console.error("Error Menambahkan Jenis Barang", error);

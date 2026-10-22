@@ -23,9 +23,16 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const hasil = await prisma.$queryRaw<{ nomor: bigint }[]>`
+  SELECT nextval('kode_barang_seq') AS nomor
+`;
+
+const kode_barang = `BRG-${String(hasil[0].nomor).padStart(3, '0')}`;
 
     const newInventory = await prisma.inventory.create({
+      
       data: {
+        kode_barang,
         jenis_barang,
         ukuran,
         status,
@@ -38,7 +45,7 @@ export async function POST(request: Request) {
         jenis_barang: newInventory.jenis_barang,
         jenis : "Inventory",
         aktivitas: "Menambah inventory baru",
-        keterangan: `Inventory baru ${newInventory.jenis_barang} dengan ukuran ${newInventory.ukuran} telah ditambahkan`,
+        keterangan: `Inventory baru ${newInventory.jenis_barang} dengan ukuran ${newInventory.ukuran} dan kode barang ${newInventory.kode_barang} telah ditambahkan`,
       }
     })
 

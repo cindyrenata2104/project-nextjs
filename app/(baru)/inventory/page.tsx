@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import Autocomplete from "@/app/component/autocomplete";
 
 interface Inventory {
   id: number;
+  kode_barang: string,
   jenis_barang: string;
   ukuran: string;
   status: string;
@@ -138,17 +140,21 @@ export default function InventoryPage() {
                 {/* Input Nama Barang */}
                 <div className="mb-4">
                   {formError && <div className="text-red-600 mb-4 font-semibold">{formError}</div>}
-                  <label className="block text-sm font-medium mb-1">Jenis Barang</label>
-                  <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2 mb-3"
-                    value={form.jenis_barang}
-                    onChange={(e) => setForm({ ...form, jenis_barang: e.target.value })}
-                  />
+                 <Autocomplete
+                    onSelect={(item) => {
+                        setForm({
+                            ...form,
+                            jenis_barang: item.jenis_barang,
+                        });
+                    }}
+                />
                   {fieldErrors.jenis_barang && (
                     <p className="text-red-500 text-sm mt-1">{fieldErrors.jenis_barang}</p>
                   )}
-                  <label className="block text-sm font-medium mb-1">Ukuran</label>
+                   {fieldErrors.ukuran && (
+                    <p className="text-red-500 text-sm mt-1">{fieldErrors.ukuran}</p>
+                    )}
+                    <label className="block text-sm font-medium mb-1">Ukuran</label>
                   <input
                     type="text"
                     
@@ -156,9 +162,7 @@ export default function InventoryPage() {
                     value={form.ukuran}
                     onChange={(e) => setForm({ ...form, ukuran: e.target.value })}
                   />
-                   {fieldErrors.ukuran && (
-                    <p className="text-red-500 text-sm mt-1">{fieldErrors.ukuran}</p>
-                    )}
+                  
                   <label className="block text-sm font-medium mb-1">Status</label>
                   <input
                     type="text"
@@ -206,6 +210,7 @@ export default function InventoryPage() {
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100 text-gray-600">
                 <th className="p-4 font-semibold">ID</th>
+                <th className="p-4 font-semibold">Kode Barang</th>
                 <th className="p-4 font-semibold">Jenis Barang</th>
                 <th className="p-4 font-semibold">Ukuran</th>
                 <th className="p-4 font-semibold">Status</th>
@@ -229,6 +234,7 @@ export default function InventoryPage() {
                 filteredInventory.map((item) => (
                   <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                     <td className="p-4 text-gray-600">#{item.id}</td>
+                    <td className="p-4 text-gray-600">{item.kode_barang}</td>
                     <td className="p-4 font-medium text-gray-800">{item.jenis_barang}</td>
                     <td className="p-4 text-gray-600">{item.ukuran}</td>
                     <td className="p-4">
