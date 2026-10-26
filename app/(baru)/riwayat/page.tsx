@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import Pagination from '@/app/component/pagination'
 interface Riwayat {
   id: number;
   id_karyawan: number | null;
@@ -16,6 +17,15 @@ interface Riwayat {
 export default function RiwayatPage() {
   // 1. Menyimpan data riwayat
   const [riwayat, setRiwayat] = useState<Riwayat[]>([]);
+  const [currentPage, setCurrentPage]= useState(1);
+  const itemPerPage = 10;
+  const totalPages = Math.ceil(riwayat.length/itemPerPage);
+  const totalPost = riwayat.length;
+  const startIndex = (currentPage - 1) * itemPerPage;
+  const endIndex = startIndex + itemPerPage;
+  const currentRiwayat = riwayat.slice(startIndex, endIndex);
+
+
 
   useEffect(() => { 
       fetchRiwayat();
@@ -57,7 +67,7 @@ export default function RiwayatPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {riwayat.map((item) => {
+              {currentRiwayat.map((item) => {
                 return (
                   <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                     <td className="p-4 border-r border-gray-200 text-gray-700 text-center">{item.id_karyawan || '-'}</td>
@@ -81,6 +91,11 @@ export default function RiwayatPage() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
       </div>
     </div>
   );

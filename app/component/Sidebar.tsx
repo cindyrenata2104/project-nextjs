@@ -43,6 +43,12 @@ export default function Sidebar() {
           );
         })}
       </nav>
+      <Link
+        href="/setting"
+        className="p-8 text-m text-slate-500 text-center"
+      >
+        Setting
+      </Link>
       <button
         onClick={() => signOut({ callbackUrl: "/login" })}
         className="w-full px-4 py-3 rounded-xl text-slate-300 hover:bg-red-600 hover:text-white transition-all"

@@ -10,8 +10,8 @@ interface JenisBarang {
 export default function JenisBarangPage() {
     const [jenisBarang, setJenisBarang] = useState<JenisBarang[]>([]);
     const [isModalOpen, setModalOpen] = useState(false)
-    const [form, setForm] = useState({jenis_barang: ''});
-    
+    const [form, setForm] = useState({ jenis_barang: '' });
+
 
     const fetchJenisBarang = async () => {
         const response = await fetch('/api/jenis-barang');
@@ -31,7 +31,7 @@ export default function JenisBarangPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(form)
             });
-            if (response.ok) { 
+            if (response.ok) {
                 // Jika berhasil masuk database:
                 setForm({ jenis_barang: '' }); // Reset form
                 setModalOpen(false); // Tutup pop up
@@ -48,50 +48,50 @@ export default function JenisBarangPage() {
                 <button
                     onClick={() => {
                         setModalOpen(true)
-                     }}
-                    
+                    }}
+
                     className="bg-blue-500 text-white px-4 py-2 rounded mb-4"
                 >
                     + Tambah Jenis Barang
                 </button>
             </div>
-              {isModalOpen && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 flex justify-center items-center z-50">
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-all duration-300 flex justify-center items-center z-50">
 
-            <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 transition-all duration-300 scale-100 opacity-100">
-              <h2 className="text-xl font-bold mb-4">Form Tambah Barang</h2>
+                    <div className="bg-white p-6 rounded-lg shadow-lg w-1/3 transition-all duration-300 scale-100 opacity-100">
+                        <h2 className="text-xl font-bold mb-4">Form Tambah Barang</h2>
 
-              <form onSubmit={handleCreate}>
-                {/* Input Nama Barang */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">Jenis Barang</label>
-                  <input
-                    type="text"
-                    className="w-full border rounded px-3 py-2 mb-3"
-                    value={form.jenis_barang}
-                    onChange={(e) => setForm({ ...form, jenis_barang: e.target.value })}
-                  />
+                        <form onSubmit={handleCreate}>
+                            {/* Input Nama Barang */}
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium mb-1">Jenis Barang</label>
+                                <input
+                                    type="text"
+                                    className="w-full border rounded px-3 py-2 mb-3"
+                                    value={form.jenis_barang}
+                                    onChange={(e) => setForm({ ...form, jenis_barang: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="flex justify-end gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => setModalOpen(false)}
+                                    className="bg-gray-300 px-4 py-2 rounded"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="bg-blue-500 text-white px-4 py-2 rounded"
+                                >
+                                    Simpan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-
-                <div className="flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="bg-gray-300 px-4 py-2 rounded"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-500 text-white px-4 py-2 rounded"
-                  >
-                    Simpan
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+            )}
 
             {/* Tabel Jenis Barang */}
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
