@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/prisma';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session){
+      return NextResponse.json(
+        {error: "Unauthorized"},
+        {status:401}
+      )
+    }
     const data = await prisma.inventory.findMany();
     return NextResponse.json(data);
   } catch (error) {
@@ -13,6 +22,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+    if(!session){
+      return NextResponse.json(
+        {error:"Unauthorized"},
+        {status:401}
+      )
+    }
     const body = await request.json();
     const { jenis_barang, ukuran, status } = body;
 
