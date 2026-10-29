@@ -46,7 +46,7 @@ const kode_barang = `BRG-${String(hasil[0].nomor).padStart(3, '0')}`;
         jenis : "Inventory",
         aktivitas: "Menambah inventory baru",
         keterangan: `Inventory baru ${newInventory.jenis_barang} dengan ukuran ${newInventory.ukuran} dan kode barang ${newInventory.kode_barang} telah ditambahkan`,
-      }
+      } 
     })
 
     return NextResponse.json(newInventory, { status: 201 });
