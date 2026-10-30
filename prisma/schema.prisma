@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Inventory {
+  id              Int             @id @default(autoincrement())
+  kode_barang     String           @unique @default("")
+  jenis_barang    String
+  jenis_barang_id Int?
+  ukuran          String
+  status          StatusInventory
+
+  Peminjaman  Peminjaman[]
+  jenisBarang JenisBarang? @relation(fields: [jenis_barang_id], references: [id])
+}
+ 
+model JenisBarang {
+  id           Int         @id @default(autoincrement())
+  jenis_barang String
+  Inventory    Inventory[]
+}
+
+ 
+model Karyawan {
+  id           Int          @id @default(autoincrement())
+  nama         String
+  jabatan      String
+  tanggal_mulai DateTime?
+  tanggal_selesai DateTime?
+  Peminjaman   Peminjaman[]
+}
+
+model Peminjaman {
+  id                 Int           @id @default(autoincrement())
+  karyawan_id        Int
+  inventory_id       Int
+  tanggal_peminjaman DateTime
+  inventory          Inventory     @relation(fields: [inventory_id], references: [id])
+  karyawan           Karyawan      @relation(fields: [karyawan_id], references: [id])
+  Pengembalian       Pengembalian?
+}
+
+model Pengembalian {
+  id                   Int        @id @default(autoincrement())
+  peminjaman_id        Int        @unique
+  tanggal_pengembalian DateTime
+  peminjaman           Peminjaman @relation(fields: [peminjaman_id], references: [id])
+}
+
+model Riwayat {
+  id            Int      @id @default(autoincrement())
+  id_karyawan   Int?
+  nama_karyawan String?
+  id_barang     Int?
+  jenis_barang  String?
+  jenis         String
+  aktivitas     String
+  keterangan    String
+  tanggal       DateTime @default(now())
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String @unique
+  password String
+}
+
+enum StatusInventory {
+  tersedia
+  dipinjam
+}
+
+
+
