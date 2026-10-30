@@ -9,12 +9,12 @@ interface JenisBarang {
 }
 
 interface AutocompleteProps {
-    onSelect: (jenisBarang: JenisBarang) => void;
+    value: string;
+    onChange: (jenisBarang: string) => void;
 }
 
-export default function Autocomplete({ onSelect }: AutocompleteProps) {
+export default function Autocomplete({ value, onChange }: AutocompleteProps) {
     const [jenisBarang, setJenisBarang] = useState<JenisBarang[]>([]);
-    const [search, setSearch] = useState("");
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
     useEffect(() => {
@@ -36,18 +36,30 @@ export default function Autocomplete({ onSelect }: AutocompleteProps) {
         fetchJenisBarang();
     }, []);
 
-    const filteredJenisBarang = jenisBarang.filter((item) =>
-        item.jenis_barang.toLowerCase().includes(search.toLowerCase())
-    );
+    const search = value.trim().toLowerCase();
+    const filteredJenisBarang = search
+        ? jenisBarang.filter((item) =>
+              item.jenis_barang.toLowerCase().includes(search)
+          )
+        : jenisBarang;
 
     const handleSelect = (item: JenisBarang) => {
-        setSearch(item.jenis_barang);
+        onChange(item.jenis_barang);
         setIsDropdownOpen(false);
-        onSelect(item);
     };
 
     return (
-        <div className="relative w-full">
+        <div
+            className="relative w-full"
+            onBlur={(event) => {
+                if (
+                    !(event.relatedTarget instanceof Node) ||
+                    !event.currentTarget.contains(event.relatedTarget)
+                ) {
+                    setIsDropdownOpen(false);
+                }
+            }}
+        >
             <label className="mb-1 block text-sm font-medium">
                 Jenis Barang
             </label>
@@ -55,16 +67,16 @@ export default function Autocomplete({ onSelect }: AutocompleteProps) {
             <input
                 type="text"
                 placeholder="Cari jenis barang..."
-                value={search}
+                value={value}
                 onChange={(e) => {
-                    setSearch(e.target.value);
+                    onChange(e.target.value);
                     setIsDropdownOpen(true);
                 }}
                 onFocus={() => setIsDropdownOpen(true)}
                 className="w-full rounded-md border border-gray-300 p-2 outline-none focus:border-blue-500"
             />
 
-            {isDropdownOpen && search.trim() !== "" && (
+            {isDropdownOpen && (
                 <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-md border border-gray-200 bg-white shadow-md">
                     {filteredJenisBarang.length > 0 ? (
                         filteredJenisBarang.map((item) => (
@@ -79,7 +91,9 @@ export default function Autocomplete({ onSelect }: AutocompleteProps) {
                         ))
                     ) : (
                         <p className="p-3 text-sm text-gray-500">
-                            Jenis barang tidak ditemukan.
+                            {search
+                                ? "Tidak ada pilihan yang cocok. Jenis yang diketik tetap bisa disimpan."
+                                : "Belum ada jenis barang terdaftar."}
                         </p>
                     )}
                 </div>

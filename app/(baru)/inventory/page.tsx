@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import React, { useEffect, useState } from 'react';
 import Autocomplete from "@/app/component/autocomplete";
@@ -141,10 +141,11 @@ export default function InventoryPage() {
                 <div className="mb-4">
                   {formError && <div className="text-red-600 mb-4 font-semibold">{formError}</div>}
                  <Autocomplete
-                    onSelect={(item) => {
+                    value={form.jenis_barang}
+                    onChange={(jenis_barang) => {
                         setForm({
                             ...form,
-                            jenis_barang: item.jenis_barang,
+                            jenis_barang,
                         });
                     }}
                 />

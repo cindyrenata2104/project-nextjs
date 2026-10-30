@@ -11,7 +11,7 @@ export default function Sidebar() {
     { name: 'Dashboard', href: '/dashboard' },
     { name: 'Karyawan', href: '/karyawan' },
     { name: 'Inventory', href: '/inventory' },
-    { name: 'Kategori Barang', href: '/jenis-barang'},
+    { name: 'Jenis Barang', href: '/jenis-barang'},
     { name: 'Peminjaman', href: '/peminjaman' },
     { name: 'Pengembalian', href: '/pengembalian' },
     { name: 'Riwayat', href: '/riwayat' },
